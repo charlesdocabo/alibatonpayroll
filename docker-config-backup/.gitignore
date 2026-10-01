@@ -1,0 +1,33 @@
+# Environment files / secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Laravel
+**/vendor/
+**/node_modules/
+**/storage/logs/*
+**/storage/framework/cache/*
+**/storage/framework/sessions/*
+**/storage/framework/views/*
+
+# Laravel generated files
+**/bootstrap/cache/*.php
+
+# IDE / OS
+.vscode/
+.idea/
+*.log
+.DS_Store
+Thumbs.db
+
+# Docker / local development
+docker-backup/
+
+# Temporary files
+*.tmp
+*.temp
+smtp-test.php

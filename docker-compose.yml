@@ -1,0 +1,209 @@
+services:
+
+  employee-service:
+    build:
+      context: ./employee-service
+      dockerfile: Dockerfile
+    container_name: payroll-employee
+    ports:
+      - "8001:8000"
+    env_file:
+      - ./employee-service/.env
+    depends_on:
+      - employee-db
+    networks:
+      - payroll-network
+
+  payroll-service:
+    build:
+      context: ./payroll-service
+      dockerfile: Dockerfile
+    container_name: payroll-payroll
+    ports:
+      - "8002:8000"
+    env_file:
+      - ./payroll-service/.env
+    depends_on:
+      - payroll-db
+    networks:
+      - payroll-network
+
+  benefits-service:
+    build:
+      context: ./benefits-service
+      dockerfile: Dockerfile
+    container_name: payroll-benefits
+    ports:
+      - "8003:8000"
+    env_file:
+      - ./benefits-service/.env
+    depends_on:
+      - benefits-db
+    networks:
+      - payroll-network
+
+  claims-service:
+    build:
+      context: ./claims-service
+      dockerfile: Dockerfile
+    container_name: payroll-claims
+    ports:
+      - "8004:8000"
+    env_file:
+      - ./claims-service/.env
+    depends_on:
+      - claims-db
+    networks:
+      - payroll-network
+
+  compensation-service:
+    build:
+      context: ./compensation-service
+      dockerfile: Dockerfile
+    container_name: payroll-compensation
+    ports:
+      - "8005:8000"
+    env_file:
+      - ./compensation-service/.env
+    depends_on:
+      - compensation-db
+    networks:
+      - payroll-network
+
+  analytics-service:
+    build:
+      context: ./analytics-service
+      dockerfile: Dockerfile
+    container_name: payroll-analytics
+    ports:
+      - "8006:8000"
+    env_file:
+      - ./analytics-service/.env
+    depends_on:
+      - analytics-db
+    networks:
+      - payroll-network
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: payroll-gateway
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./api-gateway/.env
+    depends_on:
+      - employee-service
+      - payroll-service
+      - benefits-service
+      - claims-service
+      - compensation-service
+      - analytics-service
+    networks:
+      - payroll-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: payroll-frontend
+    ports:
+      - "9000:8000"
+    env_file:
+      - ./frontend/.env
+    depends_on:
+      - api-gateway
+      - frontend-db
+    networks:
+      - payroll-network
+
+  employee-db:
+    image: mysql:8.0
+    container_name: payroll-employee-db
+    environment:
+      MYSQL_DATABASE: employee_service
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - employee-db-data:/var/lib/mysql
+    networks:
+      - payroll-network
+
+  payroll-db:
+    image: mysql:8.0
+    container_name: payroll-payroll-db
+    environment:
+      MYSQL_DATABASE: payroll_service
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - payroll-db-data:/var/lib/mysql
+    networks:
+      - payroll-network
+
+  benefits-db:
+    image: mysql:8.0
+    container_name: payroll-benefits-db
+    environment:
+      MYSQL_DATABASE: benefits_service
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - benefits-db-data:/var/lib/mysql
+    networks:
+      - payroll-network
+
+  claims-db:
+    image: mysql:8.0
+    container_name: payroll-claims-db
+    environment:
+      MYSQL_DATABASE: claims_service
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - claims-db-data:/var/lib/mysql
+    networks:
+      - payroll-network
+
+  compensation-db:
+    image: mysql:8.0
+    container_name: payroll-compensation-db
+    environment:
+      MYSQL_DATABASE: compensation_service
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - compensation-db-data:/var/lib/mysql
+    networks:
+      - payroll-network
+
+  analytics-db:
+    image: mysql:8.0
+    container_name: payroll-analytics-db
+    environment:
+      MYSQL_DATABASE: analytics_service
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - analytics-db-data:/var/lib/mysql
+    networks:
+      - payroll-network
+
+  frontend-db:
+    image: mysql:8.0
+    container_name: payroll-frontend-db
+    environment:
+      MYSQL_DATABASE: frontend_auth
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - frontend-db-data:/var/lib/mysql
+    networks:
+      - payroll-network
+
+networks:
+  payroll-network:
+    driver: bridge
+
+volumes:
+  employee-db-data:
+  payroll-db-data:
+  benefits-db-data:
+  claims-db-data:
+  compensation-db-data:
+  analytics-db-data:
+  frontend-db-data:
