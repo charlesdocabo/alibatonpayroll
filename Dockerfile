@@ -5,12 +5,12 @@ FROM node:20-alpine AS node-builder
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY frontend/package*.json ./
 RUN npm ci --ignore-scripts
 
-COPY resources/ ./resources/
-COPY vite.config.js tailwind.config.js postcss.config.js ./
-COPY public/ ./public/
+COPY frontend/resources/ ./resources/
+COPY frontend/vite.config.js frontend/tailwind.config.js frontend/postcss.config.js ./
+COPY frontend/public/ ./public/
 
 RUN npm run build
 
@@ -47,8 +47,8 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
 
-# Copy PHP app
-COPY . .
+# Copy frontend application code
+COPY frontend/ .
 
 # Copy built Vite assets from Stage 1
 COPY --from=node-builder /app/public/build ./public/build
@@ -105,7 +105,7 @@ RUN echo '[supervisord]' > /etc/supervisord.conf && \
     echo 'stderr_logfile_maxbytes=0' >> /etc/supervisord.conf
 
 # Entrypoint script
-COPY docker-entrypoint.sh /docker-entrypoint.sh
+COPY frontend/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 EXPOSE 8000
