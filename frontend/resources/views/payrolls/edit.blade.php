@@ -264,6 +264,19 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="incentives">Approved Incentives & Bonuses</label>
+
+                    <input
+                        type="number"
+                        id="incentives"
+                        name="incentives"
+                        step="0.01"
+                        min="0"
+                        value="{{ old('incentives', $payroll['incentives'] ?? 0) }}"
+                    >
+                </div>
+
+                <div class="form-group">
                     <label for="other_deductions">Other Deductions</label>
 
                     <input

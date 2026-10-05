@@ -95,7 +95,7 @@
         }
 
         textarea {
-            min-height: 110px;
+            min-height: 90px;
             resize: vertical;
         }
 
@@ -162,6 +162,23 @@
             background: #dcae00;
         }
 
+        .hint {
+            font-size: 12px;
+            color: #888888;
+            margin-top: 4px;
+        }
+
+        .trip-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
         @media (max-width: 768px) {
             .main-content {
                 margin-left: 220px;
@@ -192,7 +209,8 @@
             </h1>
 
             <p class="page-subtitle">
-                Create a new performance bonus or employee incentive.
+                Create a new performance bonus or employee incentive. For driver trip incentives, use the
+                <a href="{{ url('/incentives/driver-trips') }}" style="color:#f4c400;">Driver Trip Incentives</a> page.
             </p>
 
         </div>
@@ -225,20 +243,33 @@
 
                 <div class="form-grid">
 
+                    {{-- EMPLOYEE --}}
                     <div class="form-group">
 
                         <label for="employee_id">
-                            Employee ID <span class="required">*</span>
+                            Employee <span class="required">*</span>
                         </label>
 
-                        <input
-                            type="text"
-                            id="employee_id"
-                            name="employee_id"
-                            value="{{ old('employee_id') }}"
-                            placeholder="Example: EMP001"
-                            required
-                        >
+                        @if(count($employees ?? []) > 0)
+                            <select id="employee_id" name="employee_id" required>
+                                <option value="">Select Employee</option>
+                                @foreach($employees as $emp)
+                                    <option value="{{ $emp['employee_id'] ?? '' }}"
+                                        {{ old('employee_id') === ($emp['employee_id'] ?? '') ? 'selected' : '' }}>
+                                        {{ ($emp['employee_id'] ?? '') }} — {{ ($emp['first_name'] ?? '') }} {{ ($emp['last_name'] ?? '') }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        @else
+                            <input
+                                type="text"
+                                id="employee_id"
+                                name="employee_id"
+                                value="{{ old('employee_id') }}"
+                                placeholder="Example: EMP001"
+                                required
+                            >
+                        @endif
 
                         @error('employee_id')
                             <div class="error">{{ $message }}</div>
@@ -247,6 +278,7 @@
                     </div>
 
 
+                    {{-- INCENTIVE TYPE --}}
                     <div class="form-group">
 
                         <label for="incentive_type">
@@ -257,10 +289,22 @@
                             type="text"
                             id="incentive_type"
                             name="incentive_type"
+                            list="incentive_types"
                             value="{{ old('incentive_type') }}"
                             placeholder="Example: Performance Bonus"
                             required
                         >
+
+                        <datalist id="incentive_types">
+                            <option value="Performance Bonus">
+                            <option value="Attendance Bonus">
+                            <option value="Project Completion Bonus">
+                            <option value="Safety Bonus">
+                            <option value="Driver Trip Incentive">
+                            <option value="Overtime Incentive">
+                            <option value="Year-End Bonus">
+                            <option value="Referral Bonus">
+                        </datalist>
 
                         @error('incentive_type')
                             <div class="error">{{ $message }}</div>
@@ -269,25 +313,7 @@
                     </div>
 
 
-                    <div class="form-group full">
-
-                        <label for="description">
-                            Description
-                        </label>
-
-                        <textarea
-                            id="description"
-                            name="description"
-                            placeholder="Enter details about the incentive..."
-                        >{{ old('description') }}</textarea>
-
-                        @error('description')
-                            <div class="error">{{ $message }}</div>
-                        @enderror
-
-                    </div>
-
-
+                    {{-- AMOUNT --}}
                     <div class="form-group">
 
                         <label for="amount">
@@ -312,6 +338,7 @@
                     </div>
 
 
+                    {{-- INCENTIVE DATE --}}
                     <div class="form-group">
 
                         <label for="incentive_date">
@@ -333,6 +360,30 @@
                     </div>
 
 
+                    {{-- PAYROLL PERIOD --}}
+                    <div class="form-group">
+
+                        <label for="payroll_period">
+                            Applicable Payroll Period
+                        </label>
+
+                        <input
+                            type="month"
+                            id="payroll_period"
+                            name="payroll_period"
+                            value="{{ old('payroll_period') }}"
+                        >
+
+                        <div class="hint">Month this incentive should be included in payroll (e.g., 2026-10)</div>
+
+                        @error('payroll_period')
+                            <div class="error">{{ $message }}</div>
+                        @enderror
+
+                    </div>
+
+
+                    {{-- STATUS --}}
                     <div class="form-group">
 
                         <label for="status">
@@ -359,14 +410,61 @@
                                 Approved
                             </option>
 
-                            <option value="rejected"
-                                {{ old('status') === 'rejected' ? 'selected' : '' }}>
-                                Rejected
+                            <option value="released"
+                                {{ old('status') === 'released' ? 'selected' : '' }}>
+                                Released
+                            </option>
+
+                            <option value="cancelled"
+                                {{ old('status') === 'cancelled' ? 'selected' : '' }}>
+                                Cancelled
                             </option>
 
                         </select>
 
                         @error('status')
+                            <div class="error">{{ $message }}</div>
+                        @enderror
+
+                    </div>
+
+
+                    {{-- APPROVED BY --}}
+                    <div class="form-group">
+
+                        <label for="approved_by">
+                            Approved By
+                        </label>
+
+                        <input
+                            type="text"
+                            id="approved_by"
+                            name="approved_by"
+                            value="{{ old('approved_by') }}"
+                            placeholder="Name of approver"
+                        >
+
+                        @error('approved_by')
+                            <div class="error">{{ $message }}</div>
+                        @enderror
+
+                    </div>
+
+
+                    {{-- DESCRIPTION --}}
+                    <div class="form-group full">
+
+                        <label for="description">
+                            Description / Notes
+                        </label>
+
+                        <textarea
+                            id="description"
+                            name="description"
+                            placeholder="Enter details about the incentive..."
+                        >{{ old('description') }}</textarea>
+
+                        @error('description')
                             <div class="error">{{ $message }}</div>
                         @enderror
 

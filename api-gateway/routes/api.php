@@ -236,6 +236,42 @@ Route::delete('/claims/{id}', function ($id) {
     );
 });
 
+Route::patch('/claims/{id}/approve', function ($id) {
+    $response = Http::patch(
+        "http://claims-service:8000/api/claims/{$id}/approve",
+        request()->all()
+    );
+
+    return response()->json(
+        $response->json(),
+        $response->status()
+    );
+});
+
+Route::patch('/claims/{id}/reject', function ($id) {
+    $response = Http::patch(
+        "http://claims-service:8000/api/claims/{$id}/reject",
+        request()->all()
+    );
+
+    return response()->json(
+        $response->json(),
+        $response->status()
+    );
+});
+
+Route::patch('/claims/{id}/return', function ($id) {
+    $response = Http::patch(
+        "http://claims-service:8000/api/claims/{$id}/return",
+        request()->all()
+    );
+
+    return response()->json(
+        $response->json(),
+        $response->status()
+    );
+});
+
 
 // =========================
 // INCENTIVES

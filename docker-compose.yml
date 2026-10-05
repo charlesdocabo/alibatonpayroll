@@ -13,6 +13,10 @@ services:
       - employee-db
     networks:
       - payroll-network
+    volumes:
+      - ./employee-service/app:/var/www/app
+      - ./employee-service/routes:/var/www/routes
+      - ./employee-service/database:/var/www/database
 
   payroll-service:
     build:
@@ -27,6 +31,10 @@ services:
       - payroll-db
     networks:
       - payroll-network
+    volumes:
+      - ./payroll-service/app:/var/www/app
+      - ./payroll-service/routes:/var/www/routes
+      - ./payroll-service/database:/var/www/database
 
   benefits-service:
     build:
@@ -41,6 +49,10 @@ services:
       - benefits-db
     networks:
       - payroll-network
+    volumes:
+      - ./benefits-service/app:/var/www/app
+      - ./benefits-service/routes:/var/www/routes
+      - ./benefits-service/database:/var/www/database
 
   claims-service:
     build:
@@ -55,6 +67,10 @@ services:
       - claims-db
     networks:
       - payroll-network
+    volumes:
+      - ./claims-service/app:/var/www/app
+      - ./claims-service/routes:/var/www/routes
+      - ./claims-service/database:/var/www/database
 
   compensation-service:
     build:
@@ -69,6 +85,11 @@ services:
       - compensation-db
     networks:
       - payroll-network
+    volumes:
+      - ./compensation-service/app:/var/www/app
+      - ./compensation-service/routes:/var/www/routes
+      - ./compensation-service/database:/var/www/database
+      - ../microfleet/database:/var/www/microfleet-db:ro
 
   analytics-service:
     build:
@@ -83,6 +104,10 @@ services:
       - analytics-db
     networks:
       - payroll-network
+    volumes:
+      - ./analytics-service/app:/var/www/app
+      - ./analytics-service/routes:/var/www/routes
+      - ./analytics-service/database:/var/www/database
 
   api-gateway:
     build:
@@ -102,6 +127,9 @@ services:
       - analytics-service
     networks:
       - payroll-network
+    volumes:
+      - ./api-gateway/app:/var/www/app
+      - ./api-gateway/routes:/var/www/routes
 
   frontend:
     build:
@@ -117,6 +145,13 @@ services:
       - frontend-db
     networks:
       - payroll-network
+    volumes:
+      - ./frontend/app:/var/www/app
+      - ./frontend/routes:/var/www/routes
+      - ./frontend/resources:/var/www/resources
+      - ./frontend/database:/var/www/database
+      - ./frontend/public:/var/www/public
+      - ../microfleet/database:/var/www/microfleet-db:ro
 
   employee-db:
     image: mysql:8.0

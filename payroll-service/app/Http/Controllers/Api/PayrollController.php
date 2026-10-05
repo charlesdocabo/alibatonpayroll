@@ -25,6 +25,7 @@ class PayrollController extends Controller
             'basic_salary' => 'required|numeric|min:0',
             'overtime_hours' => 'nullable|numeric|min:0',
             'allowances' => 'nullable|numeric|min:0',
+            'incentives' => 'nullable|numeric|min:0',
             'other_deductions' => 'nullable|numeric|min:0',
             'pay_date' => 'required|date',
         ]);
@@ -32,6 +33,7 @@ class PayrollController extends Controller
         $basicSalary = (float) $validated['basic_salary'];
         $overtimeHours = (float) ($validated['overtime_hours'] ?? 0);
         $allowances = (float) ($validated['allowances'] ?? 0);
+        $incentives = (float) ($validated['incentives'] ?? 0);
         $otherDeductions = (float) ($validated['other_deductions'] ?? 0);
 
         // Overtime: basic salary / 22 working days / 8 hours × 1.25
@@ -49,8 +51,8 @@ class PayrollController extends Controller
         $pagibigBase = min($basicSalary, 5000);
         $pagibigDeduction = $pagibigBase * 0.02;
 
-        // Totals
-        $grossPay = $basicSalary + $overtimePay + $allowances;
+        // Totals (Gross includes basic salary + overtime pay + allowances + approved incentives/bonuses)
+        $grossPay = $basicSalary + $overtimePay + $allowances + $incentives;
 
         $totalDeductions =
             $sssDeduction +
@@ -66,6 +68,7 @@ class PayrollController extends Controller
             'overtime_hours' => $overtimeHours,
             'overtime_pay' => $overtimePay,
             'allowances' => $allowances,
+            'incentives' => $incentives,
             'sss_deduction' => $sssDeduction,
             'philhealth_deduction' => $philhealthDeduction,
             'pagibig_deduction' => $pagibigDeduction,
@@ -98,6 +101,7 @@ class PayrollController extends Controller
             'basic_salary' => 'sometimes|required|numeric|min:0',
             'overtime_hours' => 'nullable|numeric|min:0',
             'allowances' => 'nullable|numeric|min:0',
+            'incentives' => 'nullable|numeric|min:0',
             'other_deductions' => 'nullable|numeric|min:0',
             'pay_date' => 'sometimes|required|date',
         ]);
@@ -113,6 +117,10 @@ class PayrollController extends Controller
         $allowances = array_key_exists('allowances', $validated)
             ? (float) ($validated['allowances'] ?? 0)
             : (float) $payroll->allowances;
+
+        $incentives = array_key_exists('incentives', $validated)
+            ? (float) ($validated['incentives'] ?? 0)
+            : (float) ($payroll->incentives ?? 0);
 
         $otherDeductions = array_key_exists('other_deductions', $validated)
             ? (float) ($validated['other_deductions'] ?? 0)
@@ -132,7 +140,7 @@ class PayrollController extends Controller
         $pagibigDeduction = $pagibigBase * 0.02;
 
         // Recalculate totals
-        $grossPay = $basicSalary + $overtimePay + $allowances;
+        $grossPay = $basicSalary + $overtimePay + $allowances + $incentives;
 
         $totalDeductions =
             $sssDeduction +
@@ -148,6 +156,7 @@ class PayrollController extends Controller
             'overtime_hours' => $overtimeHours,
             'overtime_pay' => $overtimePay,
             'allowances' => $allowances,
+            'incentives' => $incentives,
             'sss_deduction' => $sssDeduction,
             'philhealth_deduction' => $philhealthDeduction,
             'pagibig_deduction' => $pagibigDeduction,

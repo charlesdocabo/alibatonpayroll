@@ -592,11 +592,12 @@
             <thead>
 
                 <tr>
-                    <th>Employee ID</th>
+                    <th>Employee</th>
                     <th>Pay Date</th>
                     <th>Basic Salary</th>
                     <th>Overtime</th>
                     <th>Allowances</th>
+                    <th>Incentives</th>
                     <th>Gross Pay</th>
                     <th>Deductions</th>
                     <th>Net Pay</th>
@@ -615,6 +616,9 @@
                             <strong>
                                 {{ $payroll['employee_id'] ?? 'N/A' }}
                             </strong>
+                            @if(isset($employeeMap[$payroll['employee_id']]) && $employeeMap[$payroll['employee_id']])
+                                <div style="font-size:12px; color:#555;">{{ $employeeMap[$payroll['employee_id']] }}</div>
+                            @endif
                         </td>
 
 
@@ -644,6 +648,14 @@
                         <td class="amount-cell">
                             ₱{{ number_format(
                                 (float) ($payroll['allowances'] ?? 0),
+                                2
+                            ) }}
+                        </td>
+
+
+                        <td class="amount-cell">
+                            ₱{{ number_format(
+                                (float) ($payroll['incentives'] ?? 0),
                                 2
                             ) }}
                         </td>

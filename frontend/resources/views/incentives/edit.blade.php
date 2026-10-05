@@ -229,17 +229,29 @@
                     <div class="form-group">
 
                         <label for="employee_id">
-                            Employee ID <span class="required">*</span>
+                            Employee <span class="required">*</span>
                         </label>
 
-                        <input
-                            type="text"
-                            id="employee_id"
-                            name="employee_id"
-                            value="{{ old('employee_id', $incentive['employee_id'] ?? '') }}"
-                            placeholder="Example: EMP001"
-                            required
-                        >
+                        @if(isset($employees) && count($employees) > 0)
+                            <select id="employee_id" name="employee_id" required>
+                                <option value="">Select Employee</option>
+                                @foreach($employees as $emp)
+                                    <option value="{{ $emp['employee_id'] ?? '' }}"
+                                        {{ old('employee_id', $incentive['employee_id'] ?? '') === ($emp['employee_id'] ?? '') ? 'selected' : '' }}>
+                                        {{ ($emp['employee_id'] ?? '') }} — {{ ($emp['first_name'] ?? '') }} {{ ($emp['last_name'] ?? '') }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        @else
+                            <input
+                                type="text"
+                                id="employee_id"
+                                name="employee_id"
+                                value="{{ old('employee_id', $incentive['employee_id'] ?? '') }}"
+                                placeholder="Example: EMP001"
+                                required
+                            >
+                        @endif
 
                         @error('employee_id')
                             <div class="error">{{ $message }}</div>
@@ -336,6 +348,47 @@
 
                     <div class="form-group">
 
+                        <label for="payroll_period">
+                            Applicable Payroll Period
+                        </label>
+
+                        <input
+                            type="month"
+                            id="payroll_period"
+                            name="payroll_period"
+                            value="{{ old('payroll_period', $incentive['payroll_period'] ?? '') }}"
+                        >
+
+                        @error('payroll_period')
+                            <div class="error">{{ $message }}</div>
+                        @enderror
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="approved_by">
+                            Approved By
+                        </label>
+
+                        <input
+                            type="text"
+                            id="approved_by"
+                            name="approved_by"
+                            value="{{ old('approved_by', $incentive['approved_by'] ?? '') }}"
+                            placeholder="Approver name"
+                        >
+
+                        @error('approved_by')
+                            <div class="error">{{ $message }}</div>
+                        @enderror
+
+                    </div>
+
+
+                    <div class="form-group">
+
                         <label for="status">
                             Status <span class="required">*</span>
                         </label>
@@ -356,9 +409,14 @@
                                 Approved
                             </option>
 
-                            <option value="rejected"
-                                {{ old('status', $incentive['status'] ?? '') === 'rejected' ? 'selected' : '' }}>
-                                Rejected
+                            <option value="released"
+                                {{ old('status', $incentive['status'] ?? '') === 'released' ? 'selected' : '' }}>
+                                Released
+                            </option>
+
+                            <option value="cancelled"
+                                {{ old('status', $incentive['status'] ?? '') === 'cancelled' ? 'selected' : '' }}>
+                                Cancelled
                             </option>
 
                         </select>

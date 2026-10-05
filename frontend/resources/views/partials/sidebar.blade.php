@@ -245,10 +245,38 @@
 
             <a
                 href="{{ route('incentives.index') }}"
-                class="sidebar-link {{ request()->is('incentives*') ? 'active' : '' }}"
+                class="sidebar-link {{ request()->is('incentives') || request()->is('incentives/create') || request()->is('incentives/*/edit') ? 'active' : '' }}"
             >
                 <span class="sidebar-icon">★</span>
                 <span>Incentives</span>
+            </a>
+
+            <!-- DRIVER TRIP INCENTIVES -->
+
+            <a
+                href="{{ route('incentives.driver-trips') }}"
+                class="sidebar-link {{ request()->is('incentives/driver-trips*') ? 'active' : '' }}"
+            >
+                <span class="sidebar-icon">🚚</span>
+                <span>Driver Trip Incentives</span>
+            </a>
+
+        @endif
+
+        <!-- EMPLOYEE SELF SERVICE -->
+
+        @if(auth()->user()->role === 'Employee')
+
+            <div class="sidebar-section">
+                Self Service
+            </div>
+
+            <a
+                href="{{ route('my-claims.index') }}"
+                class="sidebar-link {{ request()->is('my-claims*') ? 'active' : '' }}"
+            >
+                <span class="sidebar-icon">✓</span>
+                <span>My Claims</span>
             </a>
 
         @endif
@@ -335,7 +363,23 @@
             <span>Profile</span>
         </a>
 
-    </div>
+        <!-- TWO-FACTOR AUTH -->
+        <a
+            href="{{ route('two-factor.manage') }}"
+            class="sidebar-link {{ request()->is('two-factor*') ? 'active' : '' }}"
+            style="{{ auth()->user()->hasTwoFactorEnabled() ? '' : 'color:#f4c400;' }}"
+        >
+            <span class="sidebar-icon">{{ auth()->user()->hasTwoFactorEnabled() ? '🛡️' : '⚠️' }}</span>
+            <span>
+                Two-Factor Auth
+                @if(!auth()->user()->hasTwoFactorEnabled())
+                    <small style="display:block;font-size:10px;color:#f4c400;font-weight:bold;">NOT ENABLED</small>
+                @endif
+            </span>
+        </a>
+
+
+    </div><!-- end .sidebar-nav -->
 
 
     <!-- FOOTER -->

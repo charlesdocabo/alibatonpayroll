@@ -25,6 +25,7 @@ class SalaryGradeController extends Controller
             'description' => 'nullable|string',
             'minimum_salary' => 'required|numeric|min:0',
             'maximum_salary' => 'required|numeric|gte:minimum_salary',
+            'effective_date' => 'nullable|date',
         ]);
 
         $salaryGrade = SalaryGrade::create($validated);
@@ -51,6 +52,7 @@ class SalaryGradeController extends Controller
             'description' => 'nullable|string',
             'minimum_salary' => 'sometimes|required|numeric|min:0',
             'maximum_salary' => 'sometimes|required|numeric|gte:minimum_salary',
+            'effective_date' => 'nullable|date',
         ]);
 
         $salaryGrade->update($validated);

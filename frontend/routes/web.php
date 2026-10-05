@@ -14,6 +14,7 @@ use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\SalaryGradesController;
+use App\Http\Controllers\Auth\TwoFactorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,11 +29,33 @@ Route::get('/', function () {
 
 /*
 |--------------------------------------------------------------------------
+| Two-Factor Authentication Routes
+| Auth-required but NOT behind 'two-factor' middleware (to avoid redirect loop)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'no-cache'])->group(function () {
+    // Login challenge step
+    Route::get('/two-factor/challenge',  [TwoFactorController::class, 'challenge'])->name('two-factor.challenge');
+    Route::post('/two-factor/verify',    [TwoFactorController::class, 'verify'])->name('two-factor.verify');
+
+    // Setup wizard (generate secret + QR)
+    Route::get('/two-factor/setup',      [TwoFactorController::class, 'setup'])->name('two-factor.setup');
+    Route::post('/two-factor/enable',    [TwoFactorController::class, 'enable'])->name('two-factor.enable');
+
+    // Management (status, disable)
+    Route::get('/two-factor/manage',     [TwoFactorController::class, 'manage'])->name('two-factor.manage');
+    Route::post('/two-factor/disable',   [TwoFactorController::class, 'disable'])->name('two-factor.disable');
+});
+
+
+/*
+|--------------------------------------------------------------------------
 | Authenticated Routes
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'no-cache', 'active.user'])->group(function () {
+Route::middleware(['auth', 'no-cache', 'active.user', \App\Http\Middleware\TwoFactorMiddleware::class])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
@@ -42,6 +65,22 @@ Route::middleware(['auth', 'no-cache', 'active.user'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Claims - ALL AUTHENTICATED USERS (Employees see only their own)
+    |--------------------------------------------------------------------------
+    */
+
+    Route::middleware('role:Employee')->group(function () {
+        Route::get('/my-claims', [ClaimsController::class, 'index'])
+            ->name('my-claims.index');
+        Route::get('/my-claims/create', [ClaimsController::class, 'create'])
+            ->name('my-claims.create');
+        Route::post('/my-claims', [ClaimsController::class, 'store'])
+            ->name('my-claims.store');
+    });
 
 
     /*
@@ -166,6 +205,12 @@ Route::middleware(['auth', 'no-cache', 'active.user'])->group(function () {
         Route::get('/benefits/create', [BenefitsController::class, 'create'])
             ->name('benefits.create');
 
+        Route::get('/benefits/data', [BenefitsController::class, 'refreshData'])
+            ->name('benefits.data');
+
+        Route::get('/benefits/export-contributions', [BenefitsController::class, 'exportContributions'])
+            ->name('benefits.export');
+
         Route::post('/benefits', [BenefitsController::class, 'store'])
             ->name('benefits.store');
 
@@ -188,6 +233,9 @@ Route::middleware(['auth', 'no-cache', 'active.user'])->group(function () {
         Route::get('/claims', [ClaimsController::class, 'index'])
             ->name('claims.index');
 
+        Route::get('/claims/data', [ClaimsController::class, 'refreshData'])
+            ->name('claims.data');
+
         Route::get('/claims/create', [ClaimsController::class, 'create'])
             ->name('claims.create');
 
@@ -203,6 +251,15 @@ Route::middleware(['auth', 'no-cache', 'active.user'])->group(function () {
         Route::delete('/claims/{claim}', [ClaimsController::class, 'destroy'])
             ->name('claims.destroy');
 
+        Route::patch('/claims/{claim}/approve', [ClaimsController::class, 'approve'])
+            ->name('claims.approve');
+
+        Route::patch('/claims/{claim}/reject', [ClaimsController::class, 'reject'])
+            ->name('claims.reject');
+
+        Route::patch('/claims/{claim}/return', [ClaimsController::class, 'returnClaim'])
+            ->name('claims.return');
+
 
         /*
         |--------------------------------------------------------------------------
@@ -212,6 +269,15 @@ Route::middleware(['auth', 'no-cache', 'active.user'])->group(function () {
 
         Route::get('/incentives', [IncentivesController::class, 'index'])
             ->name('incentives.index');
+
+        Route::get('/incentives/data', [IncentivesController::class, 'refreshData'])
+            ->name('incentives.data');
+
+        Route::get('/incentives/driver-trips', [IncentivesController::class, 'driverTrips'])
+            ->name('incentives.driver-trips');
+
+        Route::get('/incentives/driver-trips/data', [IncentivesController::class, 'driverTripsData'])
+            ->name('incentives.driver-trips.data');
 
         Route::get('/incentives/create', [IncentivesController::class, 'create'])
             ->name('incentives.create');
@@ -306,6 +372,9 @@ Route::patch('/email-change-requests/{emailChangeRequest}/reject', [AdminEmailCh
 
         Route::get('/salary-grades', [SalaryGradesController::class, 'index'])
             ->name('salary-grades.index');
+
+        Route::get('/salary-grades/data', [SalaryGradesController::class, 'refreshData'])
+            ->name('salary-grades.data');
 
         Route::get('/salary-grades/create', [SalaryGradesController::class, 'create'])
             ->name('salary-grades.create');

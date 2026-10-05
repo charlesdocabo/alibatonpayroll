@@ -11,10 +11,12 @@ class SalaryGrade extends Model
         'description',
         'minimum_salary',
         'maximum_salary',
+        'effective_date',
     ];
 
     protected $casts = [
         'minimum_salary' => 'decimal:2',
         'maximum_salary' => 'decimal:2',
+        'effective_date' => 'date',
     ];
 }

@@ -72,6 +72,15 @@ class PayrollController extends Controller
                 });
 
             // =========================
+            // INCENTIVES / BONUSES
+            // =========================
+
+            $totalIncentives = collect($payrolls)
+                ->sum(function ($item) {
+                    return (float) ($item['incentives'] ?? 0);
+                });
+
+            // =========================
             // GROSS PAY
             // =========================
 
@@ -102,6 +111,17 @@ class PayrollController extends Controller
                 ? $totalNetPay / $totalPayrollRecords
                 : 0;
 
+            // Fetch employees to show employee names
+            $employeeMap = [];
+            try {
+                $empRes = Http::timeout(5)->get($this->gateway . '/api/employees');
+                if ($empRes->successful()) {
+                    foreach ($empRes->json('data', []) as $emp) {
+                        $employeeMap[$emp['employee_id']] = trim(($emp['first_name'] ?? '') . ' ' . ($emp['last_name'] ?? ''));
+                    }
+                }
+            } catch (\Exception $e) {}
+
             return view('payrolls.index', compact(
                 'payrolls',
                 'totalPayrollRecords',
@@ -109,27 +129,29 @@ class PayrollController extends Controller
                 'totalOvertimePay',
                 'totalOvertimeHours',
                 'totalAllowances',
+                'totalIncentives',
                 'totalGrossPay',
                 'totalDeductions',
                 'totalNetPay',
-                'averageNetPay'
+                'averageNetPay',
+                'employeeMap'
             ));
 
         } catch (\Exception $e) {
 
             return view('payrolls.index', [
                 'payrolls' => [],
-
                 'totalPayrollRecords' => 0,
                 'totalBasicSalary' => 0,
                 'totalOvertimePay' => 0,
                 'totalOvertimeHours' => 0,
                 'totalAllowances' => 0,
+                'totalIncentives' => 0,
                 'totalGrossPay' => 0,
                 'totalDeductions' => 0,
                 'totalNetPay' => 0,
                 'averageNetPay' => 0,
-
+                'employeeMap' => [],
                 'error' => 'Connection Error: ' . $e->getMessage()
             ]);
         }
@@ -143,7 +165,47 @@ class PayrollController extends Controller
 
     public function create()
     {
-        return view('payrolls.create');
+        // Load existing employees, active allowances, and approved incentives
+        $employees = [];
+        $employeeAllowances = [];
+        $employeeIncentives = [];
+
+        try {
+            $empRes = Http::timeout(8)->get($this->gateway . '/api/employees');
+            if ($empRes->successful()) {
+                $employees = $empRes->json('data', []) ?? [];
+            }
+        } catch (\Exception $e) {}
+
+        try {
+            $benRes = Http::timeout(8)->get($this->gateway . '/api/benefits');
+            if ($benRes->successful()) {
+                $benefits = $benRes->json('data', []) ?? [];
+                foreach ($benefits as $b) {
+                    if (($b['status'] ?? '') === 'active') {
+                        $empId = $b['employee_id'] ?? '';
+                        $amt = (float) ($b['amount'] ?? 0);
+                        $employeeAllowances[$empId] = ($employeeAllowances[$empId] ?? 0) + $amt;
+                    }
+                }
+            }
+        } catch (\Exception $e) {}
+
+        try {
+            $incRes = Http::timeout(8)->get($this->gateway . '/api/incentives');
+            if ($incRes->successful()) {
+                $incentives = $incRes->json('data', []) ?? [];
+                foreach ($incentives as $inc) {
+                    if (($inc['status'] ?? '') === 'approved') {
+                        $empId = $inc['employee_id'] ?? '';
+                        $amt = (float) ($inc['amount'] ?? 0);
+                        $employeeIncentives[$empId] = ($employeeIncentives[$empId] ?? 0) + $amt;
+                    }
+                }
+            }
+        } catch (\Exception $e) {}
+
+        return view('payrolls.create', compact('employees', 'employeeAllowances', 'employeeIncentives'));
     }
 
     /*
@@ -159,6 +221,7 @@ class PayrollController extends Controller
             'basic_salary' => 'required|numeric|min:0',
             'overtime_hours' => 'nullable|numeric|min:0',
             'allowances' => 'nullable|numeric|min:0',
+            'incentives' => 'nullable|numeric|min:0',
             'other_deductions' => 'nullable|numeric|min:0',
             'pay_date' => 'required|date',
         ]);
@@ -268,6 +331,7 @@ class PayrollController extends Controller
             'basic_salary' => 'required|numeric|min:0',
             'overtime_hours' => 'nullable|numeric|min:0',
             'allowances' => 'nullable|numeric|min:0',
+            'incentives' => 'nullable|numeric|min:0',
             'other_deductions' => 'nullable|numeric|min:0',
             'pay_date' => 'required|date',
         ]);
@@ -414,9 +478,25 @@ class PayrollController extends Controller
                     );
             }
 
+            // Fetch employee profile details
+            $employee = null;
+            if (!empty($payroll['employee_id'])) {
+                try {
+                    $empRes = Http::timeout(5)->get($this->gateway . '/api/employees/' . $payroll['employee_id']);
+                    if ($empRes->successful()) {
+                        $employee = $empRes->json('data');
+                    } else {
+                        $allEmps = Http::timeout(5)->get($this->gateway . '/api/employees');
+                        if ($allEmps->successful()) {
+                            $employee = collect($allEmps->json('data', []))->firstWhere('employee_id', $payroll['employee_id']);
+                        }
+                    }
+                } catch (\Exception $e) {}
+            }
+
             return view(
                 'payrolls.payslip',
-                compact('payroll')
+                compact('payroll', 'employee')
             );
 
         } catch (\Exception $e) {

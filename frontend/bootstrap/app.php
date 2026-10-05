@@ -13,9 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
    ->withMiddleware(function (Middleware $middleware): void {
    $middleware->alias([
-    'role' => \App\Http\Middleware\RoleMiddleware::class,
-    'no-cache' => \App\Http\Middleware\NoCache::class,
-    'active.user' => \App\Http\Middleware\CheckActiveUser::class,
+    'role'         => \App\Http\Middleware\RoleMiddleware::class,
+    'no-cache'     => \App\Http\Middleware\NoCache::class,
+    'active.user'  => \App\Http\Middleware\CheckActiveUser::class,
+    'two_factor'   => \App\Http\Middleware\TwoFactorMiddleware::class,
     ]);
 })
     ->withExceptions(function (Exceptions $exceptions): void {

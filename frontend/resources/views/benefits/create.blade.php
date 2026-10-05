@@ -191,11 +191,21 @@
             <div class="form-grid">
 
                 <div class="form-group">
+                    <label for="employee_select">Select Registered Employee</label>
+                    <select id="employee_select" onchange="document.getElementById('employee_id').value = this.value">
+                        <option value="">-- Choose Employee (Optional) --</option>
+                        @foreach($employees ?? [] as $emp)
+                            <option value="{{ $emp['employee_id'] }}" {{ old('employee_id') == $emp['employee_id'] ? 'selected' : '' }}>
+                                {{ $emp['employee_id'] }} - {{ $emp['first_name'] ?? '' }} {{ $emp['last_name'] ?? '' }} ({{ $emp['department'] ?? 'General' }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
 
+                <div class="form-group">
                     <label for="employee_id">
                         Employee ID <span class="required">*</span>
                     </label>
-
                     <input
                         type="text"
                         id="employee_id"
@@ -204,110 +214,164 @@
                         placeholder="Example: EMP001"
                         required
                     >
-
                     @error('employee_id')
                         <div class="error">{{ $message }}</div>
                     @enderror
-
                 </div>
 
                 <div class="form-group">
-
                     <label for="benefit_type">
                         Benefit Type <span class="required">*</span>
                     </label>
-
                     <input
                         type="text"
                         id="benefit_type"
                         name="benefit_type"
                         value="{{ old('benefit_type') }}"
-                        placeholder="Example: Health Insurance"
+                        placeholder="Example: HMO / Health Insurance, Rice Allowance"
+                        list="benefit_types_list"
                         required
                     >
-
+                    <datalist id="benefit_types_list">
+                        <option value="HMO / Health Insurance">
+                        <option value="Medical Allowance">
+                        <option value="Rice Subsidy">
+                        <option value="Transportation Allowance">
+                        <option value="Communication Allowance">
+                        <option value="Life Insurance">
+                    </datalist>
                     @error('benefit_type')
                         <div class="error">{{ $message }}</div>
                     @enderror
-
                 </div>
 
                 <div class="form-group">
-
                     <label for="provider">
-                        Provider
+                        Provider / Insurer
                     </label>
-
                     <input
                         type="text"
                         id="provider"
                         name="provider"
                         value="{{ old('provider') }}"
-                        placeholder="Example: Maxicare"
+                        placeholder="Example: Maxicare, PhilCare, Medicard"
                     >
-
                     @error('provider')
                         <div class="error">{{ $message }}</div>
                     @enderror
-
                 </div>
 
                 <div class="form-group">
-
-                    <label for="amount">
-                        Benefit Amount <span class="required">*</span>
+                    <label for="membership_number">
+                        HMO / Policy Membership Number
                     </label>
+                    <input
+                        type="text"
+                        id="membership_number"
+                        name="membership_number"
+                        value="{{ old('membership_number') }}"
+                        placeholder="Example: HMO-88291039"
+                    >
+                    @error('membership_number')
+                        <div class="error">{{ $message }}</div>
+                    @enderror
+                </div>
 
+                <div class="form-group">
+                    <label for="coverage">
+                        HMO Coverage Limit / Amount (₱)
+                    </label>
+                    <input
+                        type="number"
+                        id="coverage"
+                        name="coverage"
+                        value="{{ old('coverage') }}"
+                        min="0"
+                        step="0.01"
+                        placeholder="Example: 150000.00"
+                    >
+                    @error('coverage')
+                        <div class="error">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="form-group">
+                    <label for="amount">
+                        Monthly Cost / Allowance Amount (₱) <span class="required">*</span>
+                    </label>
                     <input
                         type="number"
                         id="amount"
                         name="amount"
-                        value="{{ old('amount') }}"
+                        value="{{ old('amount', 0) }}"
                         min="0"
                         step="0.01"
                         placeholder="0.00"
                         required
                     >
-
                     @error('amount')
                         <div class="error">{{ $message }}</div>
                     @enderror
-
                 </div>
 
                 <div class="form-group">
+                    <label for="start_date">
+                        Effective Date (Start)
+                    </label>
+                    <input
+                        type="date"
+                        id="start_date"
+                        name="start_date"
+                        value="{{ old('start_date') }}"
+                    >
+                    @error('start_date')
+                        <div class="error">{{ $message }}</div>
+                    @enderror
+                </div>
 
+                <div class="form-group">
+                    <label for="end_date">
+                        Expiration Date (End)
+                    </label>
+                    <input
+                        type="date"
+                        id="end_date"
+                        name="end_date"
+                        value="{{ old('end_date') }}"
+                    >
+                    @error('end_date')
+                        <div class="error">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="form-group">
                     <label for="status">
                         Status <span class="required">*</span>
                     </label>
-
                     <select id="status" name="status" required>
-
-                        <option value="">
-                            Select Status
-                        </option>
-
-                        <option value="active"
-                            {{ old('status') === 'active' ? 'selected' : '' }}>
-                            Active
-                        </option>
-
-                        <option value="inactive"
-                            {{ old('status') === 'inactive' ? 'selected' : '' }}>
-                            Inactive
-                        </option>
-
-                        <option value="pending"
-                            {{ old('status') === 'pending' ? 'selected' : '' }}>
-                            Pending
-                        </option>
-
+                        <option value="">Select Status</option>
+                        <option value="active" {{ old('status', 'active') === 'active' ? 'selected' : '' }}>Active</option>
+                        <option value="inactive" {{ old('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                        <option value="pending" {{ old('status') === 'pending' ? 'selected' : '' }}>Pending</option>
                     </select>
-
                     @error('status')
                         <div class="error">{{ $message }}</div>
                     @enderror
+                </div>
 
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="description">
+                        Description / Coverage Details
+                    </label>
+                    <textarea
+                        id="description"
+                        name="description"
+                        style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; min-height:80px;"
+                        placeholder="Additional details regarding benefit package, tier, dependents, or policy notes..."
+                    >{{ old('description') }}</textarea>
+                    @error('description')
+                        <div class="error">{{ $message }}</div>
+                    @enderror
                 </div>
 
             </div>

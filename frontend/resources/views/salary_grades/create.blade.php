@@ -209,6 +209,25 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="effective_date">
+                        Effective Date
+                    </label>
+
+                    <input type="date"
+                           id="effective_date"
+                           name="effective_date"
+                           value="{{ old('effective_date', date('Y-m-d')) }}">
+
+                    <div class="helper-text">
+                        The date this salary grade schedule takes effect.
+                    </div>
+
+                    @error('effective_date')
+                        <div class="error">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="form-group">
                     <label for="description">
                         Description
                     </label>

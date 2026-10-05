@@ -194,21 +194,39 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="employee_id">Employee ID</label>
+                    <label for="employee_select">Select Registered Employee</label>
+                    <select id="employee_select" class="form-select" onchange="autoFillEmployee(this)">
+                        <option value="">-- Choose Employee (Auto-fill Data) --</option>
+                        @foreach($employees ?? [] as $emp)
+                            <option value="{{ $emp['employee_id'] }}"
+                                data-salary="{{ $emp['salary'] ?? 0 }}"
+                                data-name="{{ ($emp['first_name'] ?? '') . ' ' . ($emp['last_name'] ?? '') }}"
+                                data-dept="{{ $emp['department'] ?? '' }}"
+                                data-pos="{{ $emp['position'] ?? '' }}"
+                                data-allowance="{{ $employeeAllowances[$emp['employee_id']] ?? 0 }}"
+                                data-incentive="{{ $employeeIncentives[$emp['employee_id']] ?? 0 }}"
+                                {{ old('employee_id') == $emp['employee_id'] ? 'selected' : '' }}
+                            >
+                                {{ $emp['employee_id'] }} - {{ $emp['first_name'] ?? '' }} {{ $emp['last_name'] ?? '' }} ({{ $emp['position'] ?? 'Employee' }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
 
+                <div class="form-group">
+                    <label for="employee_id">Employee ID <span style="color:#d9534f">*</span></label>
                     <input
                         type="text"
                         id="employee_id"
                         name="employee_id"
                         value="{{ old('employee_id') }}"
-                        placeholder="Example: emp2"
+                        placeholder="Example: EMP001"
                         required
                     >
                 </div>
 
                 <div class="form-group">
-                    <label for="pay_date">Pay Date</label>
-
+                    <label for="pay_date">Pay Date <span style="color:#d9534f">*</span></label>
                     <input
                         type="date"
                         id="pay_date"
@@ -219,8 +237,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="basic_salary">Basic Salary</label>
-
+                    <label for="basic_salary">Basic Salary (₱) <span style="color:#d9534f">*</span></label>
                     <input
                         type="number"
                         id="basic_salary"
@@ -228,14 +245,14 @@
                         step="0.01"
                         min="0"
                         value="{{ old('basic_salary') }}"
-                        placeholder="1500.00"
+                        placeholder="0.00"
+                        oninput="calculateLivePreview()"
                         required
                     >
                 </div>
 
                 <div class="form-group">
                     <label for="overtime_hours">Overtime Hours</label>
-
                     <input
                         type="number"
                         id="overtime_hours"
@@ -244,12 +261,12 @@
                         min="0"
                         value="{{ old('overtime_hours', 0) }}"
                         placeholder="0"
+                        oninput="calculateLivePreview()"
                     >
                 </div>
 
                 <div class="form-group">
-                    <label for="allowances">Allowances</label>
-
+                    <label for="allowances">Allowances (₱)</label>
                     <input
                         type="number"
                         id="allowances"
@@ -258,12 +275,26 @@
                         min="0"
                         value="{{ old('allowances', 0) }}"
                         placeholder="0.00"
+                        oninput="calculateLivePreview()"
                     >
                 </div>
 
                 <div class="form-group">
-                    <label for="other_deductions">Other Deductions</label>
+                    <label for="incentives">Approved Incentives & Bonuses (₱)</label>
+                    <input
+                        type="number"
+                        id="incentives"
+                        name="incentives"
+                        step="0.01"
+                        min="0"
+                        value="{{ old('incentives', 0) }}"
+                        placeholder="0.00"
+                        oninput="calculateLivePreview()"
+                    >
+                </div>
 
+                <div class="form-group">
+                    <label for="other_deductions">Other Deductions (₱)</label>
                     <input
                         type="number"
                         id="other_deductions"
@@ -272,7 +303,26 @@
                         min="0"
                         value="{{ old('other_deductions', 0) }}"
                         placeholder="0.00"
+                        oninput="calculateLivePreview()"
                     >
+                </div>
+
+                <!-- LIVE COMPUTATION SUMMARY PREVIEW -->
+                <div class="section-title" style="margin-top:20px;">
+                    Automated Calculation Preview
+                </div>
+
+                <div class="info-box" style="background:#f9f9f9; border-left:4px solid #2e7d32; display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;">
+                    <div><strong>Overtime Pay:</strong><br><span id="preview_ot" style="font-size:16px; color:#111;">₱0.00</span></div>
+                    <div><strong>Gross Pay:</strong><br><span id="preview_gross" style="font-size:16px; color:#111; font-weight:bold;">₱0.00</span></div>
+                    <div><strong>SSS (5%):</strong><br><span id="preview_sss" style="font-size:16px; color:#c62828;">₱0.00</span></div>
+                    <div><strong>PhilHealth (2.5%):</strong><br><span id="preview_philhealth" style="font-size:16px; color:#c62828;">₱0.00</span></div>
+                    <div><strong>Pag-IBIG (2%):</strong><br><span id="preview_pagibig" style="font-size:16px; color:#c62828;">₱0.00</span></div>
+                    <div><strong>Total Deductions:</strong><br><span id="preview_deductions" style="font-size:16px; color:#c62828; font-weight:bold;">₱0.00</span></div>
+                    <div style="grid-column: 1 / -1; padding-top:8px; border-top:1px dashed #ccc;">
+                        <strong>Estimated Net Salary:</strong>
+                        <span id="preview_net" style="font-size:22px; color:#2e7d32; font-weight:800; margin-left:10px;">₱0.00</span>
+                    </div>
                 </div>
 
             </div>
@@ -292,5 +342,64 @@
         </form>
 
     </div>
+
+    <script>
+        function autoFillEmployee(selectEl) {
+            const selectedOpt = selectEl.options[selectEl.selectedIndex];
+            if (!selectedOpt || !selectedOpt.value) return;
+
+            document.getElementById('employee_id').value = selectedOpt.value;
+
+            const salary = parseFloat(selectedOpt.getAttribute('data-salary')) || 0;
+            const allowance = parseFloat(selectedOpt.getAttribute('data-allowance')) || 0;
+            const incentive = parseFloat(selectedOpt.getAttribute('data-incentive')) || 0;
+
+            document.getElementById('basic_salary').value = salary.toFixed(2);
+            document.getElementById('allowances').value = allowance.toFixed(2);
+            document.getElementById('incentives').value = incentive.toFixed(2);
+
+            calculateLivePreview();
+        }
+
+        function calculateLivePreview() {
+            const basic = parseFloat(document.getElementById('basic_salary').value) || 0;
+            const otHours = parseFloat(document.getElementById('overtime_hours').value) || 0;
+            const allowances = parseFloat(document.getElementById('allowances').value) || 0;
+            const incentives = parseFloat(document.getElementById('incentives').value) || 0;
+            const otherDeductions = parseFloat(document.getElementById('other_deductions').value) || 0;
+
+            // Overtime Pay formula: basic / 22 / 8 * 1.25 * otHours
+            const otPay = (basic / 22 / 8) * 1.25 * otHours;
+
+            // SSS (5%, cap 5000 to 35000)
+            const sssBase = Math.min(Math.max(basic, 5000), 35000);
+            const sss = sssBase * 0.05;
+
+            // PhilHealth (2.5%, cap 10000 to 100000)
+            const phBase = Math.min(Math.max(basic, 10000), 100000);
+            const philhealth = phBase * 0.025;
+
+            // Pag-IBIG (2%, cap 5000)
+            const pagibigBase = Math.min(basic, 5000);
+            const pagibig = pagibigBase * 0.02;
+
+            const gross = basic + otPay + allowances + incentives;
+            const totalDeductions = sss + philhealth + pagibig + otherDeductions;
+            const net = gross - totalDeductions;
+
+            document.getElementById('preview_ot').innerText = '₱' + otPay.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('preview_gross').innerText = '₱' + gross.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('preview_sss').innerText = '₱' + sss.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('preview_philhealth').innerText = '₱' + philhealth.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('preview_pagibig').innerText = '₱' + pagibig.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('preview_deductions').innerText = '₱' + totalDeductions.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('preview_net').innerText = '₱' + net.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+
+        // Run preview on load if values exist
+        document.addEventListener('DOMContentLoaded', function() {
+            calculateLivePreview();
+        });
+    </script>
 
 @endsection
