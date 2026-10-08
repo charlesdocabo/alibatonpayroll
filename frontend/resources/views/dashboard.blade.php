@@ -696,6 +696,15 @@
     const svgEyeOff = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
     const svgEye    = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
 
+    function maskString(raw) {
+        if (!raw || raw === '-' || raw === '—' || raw === 'N/A' || raw === '0' || raw === '0.00' || raw === '') return raw;
+        const prefix = (raw.startsWith('₱') || raw.includes('₱')) ? '₱' : '';
+        const body   = prefix ? raw.replace('₱', '').trim() : raw.trim();
+        if (body.length === 0) return raw;
+        if (body.length === 1) return prefix + '•';
+        return prefix + body[0] + '••••' + body[body.length - 1];
+    }
+
     function isMasked() {
         const stored = localStorage.getItem(STORAGE_KEY);
         return stored === null ? true : stored === 'true';
@@ -719,17 +728,7 @@
                 el.setAttribute('data-raw-val', el.textContent.trim());
             }
             const raw = el.getAttribute('data-raw-val');
-            if (masked) {
-                if (raw.startsWith('₱') || raw.includes('₱')) {
-                    el.textContent = '₱••••••';
-                } else if (raw === '-' || raw === '—' || raw === 'N/A' || raw === '0' || raw === '0.00' || raw === '') {
-                    el.textContent = raw;
-                } else {
-                    el.textContent = '••••••';
-                }
-            } else {
-                el.textContent = raw;
-            }
+            el.textContent = masked ? maskString(raw) : raw;
         });
     }
 
@@ -738,7 +737,7 @@
             if (masked) {
                 btn.classList.add('is-masked');
                 btn.innerHTML = svgEyeOff + ' <span>Masked</span>';
-                btn.setAttribute('title', 'Confidential Mode Active — sensitive amounts are hidden (₱••••••). Click to unmask.');
+                btn.setAttribute('title', 'Confidential Mode Active — sensitive amounts are partially hidden. Click to unmask.');
             } else {
                 btn.classList.remove('is-masked');
                 btn.innerHTML = svgEye + ' <span>Unmasked</span>';
@@ -768,6 +767,102 @@
             }
         });
     });
+})();
+</script>
+
+{{-- SESSION TIMEOUT MODAL (Dashboard standalone page) --}}
+<style>
+    #session-timeout-overlay {
+        display: none; position: fixed; inset: 0;
+        background: rgba(0,0,0,0.55); z-index: 99999;
+        align-items: center; justify-content: center;
+    }
+    #session-timeout-overlay.show { display: flex; }
+    #session-timeout-box {
+        background: #fff; border-radius: 14px; padding: 36px 40px;
+        max-width: 400px; width: 90%;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.25); text-align: center;
+    }
+    #session-timeout-box h3 { margin: 0 0 10px; font-size: 20px; font-weight: 800; color: #111; }
+    #session-timeout-box p  { margin: 0 0 20px; color: #555; font-size: 14px; line-height: 1.5; }
+    #session-countdown { display:inline-block; font-size:48px; font-weight:900; color:#e53e3e; margin-bottom:24px; font-variant-numeric: tabular-nums; }
+    #session-timeout-bar-wrap { background:#f0f0f0; border-radius:6px; height:6px; margin-bottom:20px; overflow:hidden; }
+    #session-timeout-bar { height:6px; background:#e53e3e; border-radius:6px; transition:width 1s linear; width:100%; }
+    #session-stay-btn { background:#111; color:#f4c400; border:none; padding:12px 30px; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; }
+    #session-stay-btn:hover { background:#333; }
+</style>
+
+<div id="session-timeout-overlay" role="dialog" aria-modal="true" aria-labelledby="session-timeout-title">
+    <div id="session-timeout-box">
+        <h3 id="session-timeout-title">⏱ Session Expiring Soon</h3>
+        <p>You've been inactive for a while. For your security, you will be automatically logged out in:</p>
+        <div id="session-countdown">60</div>
+        <div id="session-timeout-bar-wrap">
+            <div id="session-timeout-bar"></div>
+        </div>
+        <button id="session-stay-btn" type="button">Stay Logged In</button>
+    </div>
+</div>
+
+<form id="session-logout-form" method="POST" action="{{ route('logout') }}" style="display:none;">
+    @csrf
+</form>
+
+<script>
+(function() {
+    const TIMEOUT_MS  = 5 * 60 * 1000;
+    const WARN_BEFORE = 60;
+    const WARN_MS     = WARN_BEFORE * 1000;
+
+    let idleTimer     = null;
+    let countdownInt  = null;
+    let countdownSecs = WARN_BEFORE;
+    let warningShown  = false;
+
+    const overlay     = document.getElementById('session-timeout-overlay');
+    const countdownEl = document.getElementById('session-countdown');
+    const bar         = document.getElementById('session-timeout-bar');
+    const stayBtn     = document.getElementById('session-stay-btn');
+    const logoutForm  = document.getElementById('session-logout-form');
+
+    function resetIdle() {
+        if (warningShown) return;
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(showWarning, TIMEOUT_MS - WARN_MS);
+    }
+
+    function showWarning() {
+        warningShown  = true;
+        countdownSecs = WARN_BEFORE;
+        overlay.classList.add('show');
+        countdownEl.textContent = countdownSecs;
+        bar.style.width = '100%';
+
+        countdownInt = setInterval(function() {
+            countdownSecs--;
+            countdownEl.textContent = countdownSecs;
+            bar.style.width = ((countdownSecs / WARN_BEFORE) * 100) + '%';
+            if (countdownSecs <= 0) {
+                clearInterval(countdownInt);
+                overlay.classList.remove('show');
+                logoutForm.submit();
+            }
+        }, 1000);
+    }
+
+    function stayLoggedIn() {
+        clearInterval(countdownInt);
+        warningShown = false;
+        overlay.classList.remove('show');
+        resetIdle();
+    }
+
+    ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'].forEach(function(evt) {
+        document.addEventListener(evt, resetIdle, { passive: true });
+    });
+
+    stayBtn.addEventListener('click', stayLoggedIn);
+    resetIdle();
 })();
 </script>
 
