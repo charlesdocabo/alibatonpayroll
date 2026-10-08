@@ -38,8 +38,8 @@ class AnalyticsController extends Controller
             ? ($inactiveEmployees / $totalEmployees) * 100
             : 0;
 
-        // Generate or retrieve cached Gemini AI Executive Briefing
-        $aiExecutiveBrief = $this->geminiService->generateExecutiveReport($analytics);
+        // Do not pre-load report on initial page load — only show when user clicks "Generate AI Insights"
+        $aiExecutiveBrief = null;
         $aiProviderInfo = $this->geminiService->getProviderInfo();
 
         return view('analytics.index', compact(

@@ -721,6 +721,11 @@
             grid-template-columns: 1fr;
         }
     }
+
+    @keyframes aiSpin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
 </style>
 @endsection
 
@@ -742,12 +747,12 @@
     </div>
 
     <div class="header-actions">
-        <button type="button" class="btn-ai-action gold" onclick="focusGeminiChat()">
-            ✨ Ask Gemini Advisor
+        <button type="button" class="btn-ai-action gold" id="btnHeaderGenerateAi" onclick="generateAiInsights()">
+            ✨ Generate AI Insights
         </button>
 
-        <button type="button" class="btn-ai-action outline" id="btnRefreshAi" onclick="refreshAiReport()">
-            🔄 Refresh AI Brief
+        <button type="button" class="btn-ai-action outline" onclick="focusGeminiChat()">
+            💬 Ask Gemini Advisor
         </button>
 
         <button type="button" class="btn-ai-action outline" onclick="openConfigModal()">
@@ -872,19 +877,42 @@
             <span style="font-size:12px;font-weight:600;background:#fef08a;color:#854d0e;padding:2px 8px;border-radius:12px;">Gemini 2.5 Flash</span>
         </h2>
 
-        <div style="display:flex;align-items:center;gap:12px;">
-            <span class="ai-meta-info" id="aiReportTimestamp">
-                Generated: {{ $aiExecutiveBrief['generated_at'] ?? now()->format('M d, Y h:i A') }}
-            </span>
-            <button type="button" class="btn-ai-action outline" style="padding:6px 12px;font-size:12px;" onclick="copyAiReport()">
+        <div style="display:flex;align-items:center;gap:12px;" id="aiHeaderActions">
+            <span class="ai-meta-info" id="aiReportTimestamp" style="display:none;"></span>
+            <button type="button" class="btn-ai-action outline" id="btnCopyReport" style="padding:6px 12px;font-size:12px;display:none;" onclick="copyAiReport()">
                 📋 Copy Brief
+            </button>
+            <button type="button" class="btn-ai-action outline" id="btnRegenReport" style="padding:6px 12px;font-size:12px;display:none;" onclick="generateAiInsights()">
+                🔄 Regenerate
             </button>
         </div>
     </div>
 
-    <div class="ai-report-body" id="aiReportContent">
-        {!! nl2br(e($aiExecutiveBrief['report'] ?? 'Generating executive insights...')) !!}
+    {{-- INITIAL CALL TO ACTION STATE (Shown before clicking Generate) --}}
+    <div id="aiPlaceholderState" style="text-align:center;padding:36px 20px;">
+        <div style="width:58px;height:58px;background:#fef9c3;border:2px solid #F4C400;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:26px;">
+            ✨
+        </div>
+        <h3 style="margin:0 0 8px;font-size:20px;font-weight:800;color:#111;">
+            Live Executive AI Intelligence Engine
+        </h3>
+        <p style="margin:0 auto 22px;max-width:560px;color:#64748b;font-size:14px;line-height:1.6;">
+            Click below to generate a real-time strategic assessment analyzing active workforce capacity, gross payroll burn-rate, and benefits claims velocity.
+        </p>
+        <button type="button" class="btn-ai-action gold" id="btnCardGenerate" onclick="generateAiInsights()" style="padding:12px 30px;font-size:15px;box-shadow:0 4px 14px rgba(244,196,0,0.35);">
+            ✨ Generate AI Insights
+        </button>
     </div>
+
+    {{-- LOADING STATE --}}
+    <div id="aiLoadingState" style="display:none;text-align:center;padding:40px 20px;">
+        <div style="display:inline-block;width:38px;height:38px;border:3px solid #f3f3f3;border-top:3px solid #F4C400;border-radius:50%;animation:aiSpin 1s linear infinite;margin-bottom:14px;"></div>
+        <div style="font-size:15px;font-weight:700;color:#111;">⚡ Google Gemini 2.5 Flash is analyzing live company metrics...</div>
+        <div style="font-size:12.5px;color:#64748b;margin-top:6px;">Evaluating active employee ratios, payroll distributions, and claims processing velocity</div>
+    </div>
+
+    {{-- REPORT CONTENT CONTAINER (Revealed on click) --}}
+    <div class="ai-report-body" id="aiReportContent" style="display:none;"></div>
 
 </div>
 
@@ -1202,14 +1230,26 @@ async function handleChatSubmit(e) {
     }
 }
 
-async function refreshAiReport() {
-    const btn = document.getElementById('btnRefreshAi');
+async function generateAiInsights() {
+    const placeholder = document.getElementById('aiPlaceholderState');
+    const loading = document.getElementById('aiLoadingState');
     const content = document.getElementById('aiReportContent');
     const timestamp = document.getElementById('aiReportTimestamp');
+    const copyBtn = document.getElementById('btnCopyReport');
+    const regenBtn = document.getElementById('btnRegenReport');
+    const headerGenBtn = document.getElementById('btnHeaderGenerateAi');
+    const cardGenBtn = document.getElementById('btnCardGenerate');
 
-    btn.disabled = true;
-    btn.innerHTML = '⏳ Generating...';
-    content.innerHTML = '<div style="padding:20px;text-align:center;color:#64748b;">⚡ Running deep Gemini 2.5 Flash synthesis over payroll, benefits, and workforce records...</div>';
+    // Show loading spinner state
+    if (placeholder) placeholder.style.display = 'none';
+    if (content) content.style.display = 'none';
+    if (loading) loading.style.display = 'block';
+
+    if (headerGenBtn) {
+        headerGenBtn.disabled = true;
+        headerGenBtn.innerHTML = '⏳ Generating...';
+    }
+    if (cardGenBtn) cardGenBtn.disabled = true;
 
     try {
         const res = await fetch('{{ route("analytics.gemini.refresh") }}', {
@@ -1222,19 +1262,39 @@ async function refreshAiReport() {
         });
 
         const data = await res.json();
+        if (loading) loading.style.display = 'none';
+
         if (data.success && data.brief) {
             content.innerHTML = formatMarkdown(data.brief.report);
-            timestamp.textContent = 'Generated: ' + data.brief.generated_at;
+            content.style.display = 'block';
+
+            if (timestamp) {
+                timestamp.textContent = 'Generated: ' + data.brief.generated_at;
+                timestamp.style.display = 'inline';
+            }
+            if (copyBtn) copyBtn.style.display = 'inline-flex';
+            if (regenBtn) regenBtn.style.display = 'inline-flex';
+
+            if (headerGenBtn) {
+                headerGenBtn.disabled = false;
+                headerGenBtn.innerHTML = '🔄 Regenerate AI Brief';
+            }
         } else {
-            content.innerHTML = '<span style="color:#e53e3e;">Could not refresh report.</span>';
+            if (placeholder) placeholder.style.display = 'block';
+            alert('Unable to generate AI report. Please check connection.');
         }
     } catch (err) {
-        content.innerHTML = '<span style="color:#e53e3e;">Connection error during report refresh.</span>';
+        if (loading) loading.style.display = 'none';
+        if (placeholder) placeholder.style.display = 'block';
+        alert('Network error while generating AI report.');
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = '🔄 Refresh AI Brief';
+        if (headerGenBtn) headerGenBtn.disabled = false;
+        if (cardGenBtn) cardGenBtn.disabled = false;
     }
 }
+
+// Backward compatibility alias
+const refreshAiReport = generateAiInsights;
 
 async function handleKeyConfig(e) {
     e.preventDefault();

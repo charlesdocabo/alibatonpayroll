@@ -151,6 +151,7 @@ services:
       - ./frontend/resources:/var/www/resources
       - ./frontend/database:/var/www/database
       - ./frontend/public:/var/www/public
+      - ./frontend/.env:/var/www/.env
       - ../microfleet/database:/var/www/microfleet-db:ro
 
   employee-db:
