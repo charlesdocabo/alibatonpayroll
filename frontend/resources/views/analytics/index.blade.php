@@ -270,6 +270,46 @@
         margin-bottom: 6px;
     }
 
+    .ai-table-wrap {
+        overflow-x: auto;
+        margin: 14px 0 18px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+
+    .ai-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13.5px;
+        text-align: left;
+    }
+
+    .ai-table th {
+        background: #111111;
+        color: #F4C400;
+        padding: 10px 14px;
+        font-weight: 700;
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #F4C400;
+    }
+
+    .ai-table td {
+        padding: 9px 14px;
+        border-bottom: 1px solid #e2e8f0;
+        color: #1e293b;
+    }
+
+    .ai-table tr:nth-child(even) {
+        background: #f8fafc;
+    }
+
+    .ai-table tr:hover {
+        background: #fefce8;
+    }
+
     /* =========================
        ASK GEMINI INTERACTIVE CONSOLE
     ========================= */
@@ -1153,16 +1193,62 @@ function sendQuickPrompt(promptText) {
 
 function formatMarkdown(text) {
     if (!text) return '';
-    let formatted = text
-        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-        .replace(/^### (.*$)/gim, '<h4 style="margin:10px 0 4px;color:#0f172a;font-size:15px;font-weight:700;">$1</h4>')
-        .replace(/^## (.*$)/gim, '<h3 style="margin:12px 0 6px;color:#0f172a;font-size:16px;font-weight:700;">$1</h3>')
+
+    // 1. Parse Markdown Tables
+    const lines = text.split('\n');
+    let inTable = false;
+    let tableLines = [];
+    let processedLines = [];
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.startsWith('|') && line.endsWith('|')) {
+            inTable = true;
+            tableLines.push(line);
+        } else {
+            if (inTable) {
+                processedLines.push(renderTableHtml(tableLines));
+                tableLines = [];
+                inTable = false;
+            }
+            processedLines.push(lines[i]);
+        }
+    }
+    if (inTable && tableLines.length > 0) {
+        processedLines.push(renderTableHtml(tableLines));
+    }
+
+    let formatted = processedLines.join('\n');
+
+    // 2. Format Headers, bold, italics, bullets, breaks
+    formatted = formatted
+        .replace(/^### (.*$)/gim, '<h4 style="margin:14px 0 6px;color:#0f172a;font-size:15px;font-weight:700;">$1</h4>')
+        .replace(/^## (.*$)/gim, '<h3 style="margin:16px 0 8px;color:#0f172a;font-size:16.5px;font-weight:700;">$1</h3>')
         .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
         .replace(/\*(.*?)\*/gim, '<em>$1</em>')
-        .replace(/^\s*[\u2022\-\*]\s+(.*$)/gim, '<li style="margin-left:18px;margin-bottom:4px;">$1</li>')
+        .replace(/^\s*[\u2022\-\*]\s+(.*$)/gim, '<li style="margin-left:18px;margin-bottom:5px;">$1</li>')
         .replace(/\n\n/g, '<br><br>')
         .replace(/\n/g, '<br>');
+
+    formatted = formatted.replace(/<div class="ai-table-wrap"><br>/g, '<div class="ai-table-wrap">');
+    formatted = formatted.replace(/<\/table><\/div><br>/g, '</table></div>');
+
     return formatted;
+}
+
+function renderTableHtml(lines) {
+    if (lines.length < 2) return lines.join('\n');
+    const headerCols = lines[0].split('|').map(c => c.trim()).filter(c => c.length > 0);
+    let thead = '<thead><tr>' + headerCols.map(c => '<th>' + c + '</th>').join('') + '</tr></thead>';
+    let tbody = '<tbody>';
+    for (let r = 2; r < lines.length; r++) {
+        const rowCols = lines[r].split('|').map(c => c.trim()).filter((c, idx, arr) => idx > 0 && idx < arr.length - 1);
+        if (rowCols.length > 0) {
+            tbody += '<tr>' + rowCols.map(c => '<td>' + c + '</td>').join('') + '</tr>';
+        }
+    }
+    tbody += '</tbody>';
+    return '<div class="ai-table-wrap"><table class="ai-table">' + thead + tbody + '</table></div>';
 }
 
 // Format the initial server-rendered executive report cleanly on DOM ready

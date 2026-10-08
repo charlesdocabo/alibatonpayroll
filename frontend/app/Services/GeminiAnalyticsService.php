@@ -72,12 +72,14 @@ class GeminiAnalyticsService
         }
 
         $systemPrompt = $this->buildSystemContext($analytics);
-        $userPrompt = "Generate a real-time executive HR and payroll analytics briefing for Alibaton Construction Inc. Break your assessment into:\n"
+        $userPrompt = "Generate an executive HR and payroll analytics briefing for Alibaton Construction Inc. Break your assessment into:\n"
             . "1. **Workforce Stability & Productivity**: Evaluate active/inactive ratio and staffing capacity.\n"
             . "2. **Payroll & Budget Trajectory**: Analyze current total payroll, average salary, and projected annual run rate.\n"
             . "3. **Benefits & Claims Health**: Assess claims approval rates and employee benefits coverage.\n"
-            . "4. **Strategic Actionable Recommendations**: Give 3-4 specific steps for HR executive leadership.\n"
-            . "Cite real numbers from the data and keep the tone professional, structured with bold highlights and bullet points.";
+            . "4. **Strategic Actionable Recommendations**: Give 3-4 specific, numbered steps for HR executive leadership.\n"
+            . "CRITICAL INSTRUCTIONS:\n"
+            . "- Use clean Markdown headers, bullet points, and well-formed Markdown tables.\n"
+            . "- Complete all 4 sections thoroughly and finish your conclusion without cutting off mid-sentence.";
 
         $response = $this->queryLLM($systemPrompt, $userPrompt, [], $analytics);
 
@@ -102,11 +104,22 @@ class GeminiAnalyticsService
     public function askGemini(string $userQuestion, array $analytics, array $history = []): array
     {
         $systemPrompt = $this->buildSystemContext($analytics);
-        $prompt = "The user has asked the following specific question about Alibaton Construction Inc.:\n"
-            . "\"{$userQuestion}\"\n\n"
-            . "Answer this question directly and accurately using the live workforce, payroll, benefits, and claims data provided in the system context. "
-            . "Cite the exact relevant figures (e.g. employee count, pesos amounts, percentages) that answer their question. "
-            . "Be concise, helpful, and professional.";
+        $prompt = <<<PROMPT
+USER QUERY: "{$userQuestion}"
+
+CRITICAL INSTRUCTIONS FOR RELEVANCE & PRECISION:
+1. FOCUS STRICTLY ON ANSWERING WHAT THE USER ASKS. Do NOT dump an overview of all company metrics unless the user explicitly asks for a full summary or company statistics.
+2. GREETINGS & CASUAL QUESTIONS:
+   - If the user says "hello", "hi", "can you help me?", or asks an open conversational question, respond politely and concisely:
+     "Yes, absolutely! I am your AI HR & Payroll Advisor for Alibaton Construction Inc. How can I assist you today? You can ask me about payroll computations, payslip distribution strategies, DOLE labor compliance, employee benefits, or company workforce analytics."
+   - Do NOT dump the company overview metrics or salary tables.
+3. SPECIFIC WORKFLOW QUESTIONS:
+   - Answer the question directly with clear, structured, and actionable guidance tailored to Alibaton Construction Inc.'s operations.
+   - For payslip questions, explain digital vs. hard copy delivery, site logistics, and DOLE rules.
+4. NUMERICAL QUESTIONS:
+   - If the user asks for specific data (e.g. "how many active employees?", "what is our total payroll?"), provide the exact numbers from the metrics directly with brief context.
+5. Finish all thoughts and sentences completely without cutting off.
+PROMPT;
 
         return $this->queryLLM($systemPrompt, $prompt, $history, $analytics, $userQuestion);
     }
@@ -176,7 +189,7 @@ class GeminiAnalyticsService
                 ],
                 'generationConfig' => [
                     'temperature' => 0.4,
-                    'maxOutputTokens' => 1200,
+                    'maxOutputTokens' => 3000,
                 ]
             ]);
 
@@ -233,7 +246,7 @@ class GeminiAnalyticsService
                         'model' => $model,
                         'messages' => $messages,
                         'temperature' => 0.4,
-                        'max_tokens' => 1200,
+                        'max_tokens' => 3000,
                     ]);
 
                 if ($response->successful()) {
@@ -379,6 +392,17 @@ CONTEXT;
         $actRate = $totalEmp > 0 ? round(($actEmp / $totalEmp) * 100, 1) : 0;
         $inactRate = $totalEmp > 0 ? round(($inactEmp / $totalEmp) * 100, 1) : 0;
         $annualPayroll = $totPay * 12;
+
+        // Greetings & casual offers (e.g. "can you help me", "hello", "hi")
+        if (str_contains($q, 'help me') || str_contains($q, 'can you help') || str_contains($q, 'can u help') || $q === 'hi' || $q === 'hello' || $q === 'hey' || str_contains($q, 'good morning') || str_contains($q, 'good afternoon')) {
+            return "Yes, absolutely! I am your AI HR & Payroll Advisor for Alibaton Construction Inc.\n\n"
+                . "How can I assist you today? You can ask me about:\n"
+                . "• **Payroll & Payslips:** Calculations, deductions, tax compliance, and distribution workflows (digital vs. hard copy)\n"
+                . "• **Workforce & Staffing:** Active personnel deployment, leave tracking, and retention strategies\n"
+                . "• **Claims & Reimbursements:** Field expense approval velocity and SLA optimization\n"
+                . "• **Benefits & Statutory:** SSS, PhilHealth, Pag-IBIG, and DOLE labor standards compliance\n\n"
+                . "What specific topic would you like to explore?";
+        }
 
         // Question about active / inactive employees
         if (str_contains($q, 'active') || str_contains($q, 'inactive') || str_contains($q, 'how many employee') || str_contains($q, 'headcount') || str_contains($q, 'workforce')) {
