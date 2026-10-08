@@ -151,6 +151,45 @@
             gap: 15px;
         }
 
+        .btn-privacy-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f0f0f0;
+            color: #333333;
+            border: 1px solid #dcdcdc;
+            padding: 7px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            transition: all 0.2s ease;
+            user-select: none;
+            text-decoration: none;
+        }
+
+        .btn-privacy-toggle:hover {
+            background: #e2e2e2;
+            border-color: #bcbcbc;
+        }
+
+        .btn-privacy-toggle.is-masked {
+            background: #111111;
+            color: #f4c400;
+            border-color: #111111;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+        }
+
+        .btn-privacy-toggle.is-masked:hover {
+            background: #252525;
+        }
+
+        body.privacy-masked .confidential-amount,
+        body.privacy-masked .confidential-val {
+            letter-spacing: 2px !important;
+            user-select: none;
+        }
+
         .user-name {
             font-size: 14px;
             font-weight: 600;
@@ -474,6 +513,10 @@
 
             <div class="user-area">
 
+                <button type="button" class="btn-privacy-toggle is-masked" id="dashboardPrivacyToggle" title="Toggle Confidential Mode (Mask/Unmask sensitive financial info)">
+                    🔒 <span>Masked</span>
+                </button>
+
                 <span class="user-name">
                     {{ Auth::user()->name }}
                 </span>
@@ -597,7 +640,7 @@
                                         {{ $employee['department'] ?? '—' }}
                                     </td>
 
-                                    <td>
+                                    <td class="confidential-amount">
                                         ₱{{ number_format((float)($employee['salary'] ?? 0), 2) }}
                                     </td>
 
@@ -644,6 +687,86 @@
     </main>
 
 </div>
+
+{{-- PRIVACY MASKING SCRIPT --}}
+<script>
+(function() {
+    const STORAGE_KEY = 'alibaton_privacy_mask';
+
+    function isMasked() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        return stored === null ? true : stored === 'true';
+    }
+
+    function setMaskedState(masked) {
+        localStorage.setItem(STORAGE_KEY, masked ? 'true' : 'false');
+        applyMask(masked);
+        updateToggleButtons(masked);
+    }
+
+    function applyMask(masked) {
+        if (masked) {
+            document.body.classList.add('privacy-masked');
+        } else {
+            document.body.classList.remove('privacy-masked');
+        }
+
+        document.querySelectorAll('.confidential-amount, .confidential-val').forEach(el => {
+            if (!el.hasAttribute('data-raw-val')) {
+                el.setAttribute('data-raw-val', el.textContent.trim());
+            }
+            const raw = el.getAttribute('data-raw-val');
+            if (masked) {
+                if (raw.startsWith('₱') || raw.includes('₱')) {
+                    el.textContent = '₱••••••';
+                } else if (raw === '-' || raw === '—' || raw === 'N/A' || raw === '0' || raw === '0.00') {
+                    el.textContent = raw;
+                } else {
+                    el.textContent = '••••••';
+                }
+            } else {
+                el.textContent = raw;
+            }
+        });
+    }
+
+    function updateToggleButtons(masked) {
+        document.querySelectorAll('.btn-privacy-toggle').forEach(btn => {
+            if (masked) {
+                btn.classList.add('is-masked');
+                btn.innerHTML = '🔒 <span>Masked</span>';
+                btn.setAttribute('title', 'Confidential Mode Active: Sensitive salary/payout amounts are hidden (₱••••••). Click to unmask.');
+            } else {
+                btn.classList.remove('is-masked');
+                btn.innerHTML = '👁️ <span>Unmasked</span>';
+                btn.setAttribute('title', 'Confidential Mode Inactive: Full financial amounts visible. Click to mask.');
+            }
+        });
+    }
+
+    window.togglePrivacyMask = function() {
+        setMaskedState(!isMasked());
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        setMaskedState(isMasked());
+
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.btn-privacy-toggle');
+            if (btn) {
+                e.preventDefault();
+                window.togglePrivacyMask();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.altKey && (e.key === 'm' || e.key === 'M')) {
+                window.togglePrivacyMask();
+            }
+        });
+    });
+})();
+</script>
 
 </body>
 </html>

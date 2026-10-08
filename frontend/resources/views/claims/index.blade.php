@@ -492,6 +492,9 @@ tbody tr:hover { background: #fffdf0; }
             <span id="liveStatus">LIVE</span>
             &nbsp;·&nbsp; <span id="liveTime">--:--:--</span>
         </span>
+        <button type="button" class="btn-privacy-page-toggle is-masked" id="claimsPrivacyToggle" title="Toggle Confidential Mode (Mask/Unmask sensitive financial figures)" style="display:inline-flex;align-items:center;gap:6px;background:#111;color:#f4c400;border:1px solid #111;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:bold;">
+            🔒 <span>Masked</span>
+        </button>
         <button class="btn-print" onclick="window.print()">🖨 Print / PDF</button>
         <a href="{{ ($isEmployee ?? false) ? '/my-claims/create' : '/claims/create' }}" class="add-button">
             + Submit Claim
@@ -550,19 +553,19 @@ tbody tr:hover { background: #fffdf0; }
 <div class="financial-grid">
     <div class="kpi-card dark">
         <div class="kpi-label">Total Claimed Amount</div>
-        <div class="kpi-value" id="kpi-total-amount">₱{{ number_format($totalClaimAmount ?? 0, 2) }}</div>
+        <div class="kpi-value confidential-amount" id="kpi-total-amount">₱{{ number_format($totalClaimAmount ?? 0, 2) }}</div>
     </div>
     <div class="kpi-card success">
         <div class="kpi-label">Approved Payout</div>
-        <div class="kpi-value" id="kpi-approved-amount">₱{{ number_format($approvedClaimAmount ?? 0, 2) }}</div>
+        <div class="kpi-value confidential-amount" id="kpi-approved-amount">₱{{ number_format($approvedClaimAmount ?? 0, 2) }}</div>
     </div>
     <div class="kpi-card warning">
         <div class="kpi-label">Pending Payout</div>
-        <div class="kpi-value" id="kpi-pending-amount">₱{{ number_format($pendingClaimAmount ?? 0, 2) }}</div>
+        <div class="kpi-value confidential-amount" id="kpi-pending-amount">₱{{ number_format($pendingClaimAmount ?? 0, 2) }}</div>
     </div>
     <div class="kpi-card danger">
         <div class="kpi-label">Rejected Amount</div>
-        <div class="kpi-value" id="kpi-rejected-amount">₱0.00</div>
+        <div class="kpi-value confidential-amount" id="kpi-rejected-amount">₱0.00</div>
     </div>
 </div>
 
@@ -676,7 +679,7 @@ tbody tr:hover { background: #fffdf0; }
                                 {{ \Illuminate\Support\Str::limit($claim['description'] ?? '-', 60) }}
                             </td>
 
-                            <td class="claim-amount">₱{{ number_format((float)($claim['amount'] ?? 0), 2) }}</td>
+                            <td class="claim-amount confidential-amount">₱{{ number_format((float)($claim['amount'] ?? 0), 2) }}</td>
 
                             <td>
                                 @if(!empty($claim['claim_date']))
@@ -981,6 +984,9 @@ function fetchRealtimeClaims() {
             document.getElementById('kpi-approved-amount').textContent = fmt(s.approved_amount);
             document.getElementById('kpi-pending-amount').textContent  = fmt(s.pending_amount);
             document.getElementById('kpi-rejected-amount').textContent = fmt(s.rejected_amount);
+
+            // Re-apply privacy mask if active
+            if (window.refreshPrivacyMask) window.refreshPrivacyMask();
 
             // Update status bar chart
             statusChart.data.datasets[0].data = [

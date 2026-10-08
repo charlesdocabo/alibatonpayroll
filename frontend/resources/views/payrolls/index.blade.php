@@ -332,6 +332,40 @@
             font-size: 24px;
         }
     }
+
+    .btn-privacy-page-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: #ffffff;
+        color: #111111;
+        border: 1px solid #d0d0d0;
+        padding: 10px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 700;
+        transition: all 0.2s ease;
+        user-select: none;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .btn-privacy-page-toggle:hover {
+        background: #f7f7f7;
+        border-color: #b0b0b0;
+        transform: translateY(-1px);
+    }
+
+    .btn-privacy-page-toggle.is-masked {
+        background: #111111;
+        color: #f4c400;
+        border-color: #111111;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .btn-privacy-page-toggle.is-masked:hover {
+        background: #252525;
+    }
 </style>
 @endsection
 
@@ -349,9 +383,15 @@
         </p>
     </div>
 
-    <a href="{{ url('/payrolls/create') }}" class="add-button">
-        + Add Payroll
-    </a>
+    <div style="display:flex; align-items:center; gap:12px;">
+        <button type="button" class="btn-privacy-page-toggle is-masked" id="payrollPrivacyToggle" title="Toggle Confidential Mode (Mask/Unmask sensitive financial figures)">
+            🔒 <span>Masked</span>
+        </button>
+
+        <a href="{{ url('/payrolls/create') }}" class="add-button">
+            + Add Payroll
+        </a>
+    </div>
 
 </div>
 
@@ -408,7 +448,7 @@
             Total Basic Salary
         </div>
 
-        <div class="stat-value amount">
+        <div class="stat-value amount confidential-amount">
             ₱{{ number_format($totalBasicSalary ?? 0, 2) }}
         </div>
 
@@ -421,7 +461,7 @@
             Total Overtime Pay
         </div>
 
-        <div class="stat-value amount">
+        <div class="stat-value amount confidential-amount">
             ₱{{ number_format($totalOvertimePay ?? 0, 2) }}
         </div>
 
@@ -434,7 +474,7 @@
             Total Allowances
         </div>
 
-        <div class="stat-value amount">
+        <div class="stat-value amount confidential-amount">
             ₱{{ number_format($totalAllowances ?? 0, 2) }}
         </div>
 
@@ -459,7 +499,7 @@
             Total Gross Pay
         </div>
 
-        <div class="stat-value amount">
+        <div class="stat-value amount confidential-amount">
             ₱{{ number_format($totalGrossPay ?? 0, 2) }}
         </div>
 
@@ -472,7 +512,7 @@
             Total Deductions
         </div>
 
-        <div class="stat-value amount">
+        <div class="stat-value amount confidential-amount">
             ₱{{ number_format($totalDeductions ?? 0, 2) }}
         </div>
 
@@ -485,7 +525,7 @@
             Total Net Pay
         </div>
 
-        <div class="stat-value amount">
+        <div class="stat-value amount confidential-amount">
             ₱{{ number_format($totalNetPay ?? 0, 2) }}
         </div>
 
@@ -498,7 +538,7 @@
             Average Net Pay
         </div>
 
-        <div class="stat-value amount">
+        <div class="stat-value amount confidential-amount">
             ₱{{ number_format($averageNetPay ?? 0, 2) }}
         </div>
 
@@ -551,7 +591,7 @@
                 Total Gross Payroll
             </div>
 
-            <div class="summary-item-value">
+            <div class="summary-item-value confidential-amount">
                 ₱{{ number_format($totalGrossPay ?? 0, 2) }}
             </div>
 
@@ -564,7 +604,7 @@
                 Total Net Payroll
             </div>
 
-            <div class="summary-item-value">
+            <div class="summary-item-value confidential-amount">
                 ₱{{ number_format($totalNetPay ?? 0, 2) }}
             </div>
 
@@ -629,7 +669,7 @@
                         </td>
 
 
-                        <td class="amount-cell">
+                        <td class="amount-cell confidential-amount">
                             ₱{{ number_format(
                                 (float) ($payroll['basic_salary'] ?? 0),
                                 2
@@ -637,7 +677,7 @@
                         </td>
 
 
-                        <td class="amount-cell">
+                        <td class="amount-cell confidential-amount">
                             ₱{{ number_format(
                                 (float) ($payroll['overtime_pay'] ?? 0),
                                 2
@@ -645,7 +685,7 @@
                         </td>
 
 
-                        <td class="amount-cell">
+                        <td class="amount-cell confidential-amount">
                             ₱{{ number_format(
                                 (float) ($payroll['allowances'] ?? 0),
                                 2
@@ -653,7 +693,7 @@
                         </td>
 
 
-                        <td class="amount-cell">
+                        <td class="amount-cell confidential-amount">
                             ₱{{ number_format(
                                 (float) ($payroll['incentives'] ?? 0),
                                 2
@@ -661,7 +701,7 @@
                         </td>
 
 
-                        <td class="amount-cell">
+                        <td class="amount-cell confidential-amount">
                             ₱{{ number_format(
                                 (float) ($payroll['gross_pay'] ?? 0),
                                 2
@@ -669,7 +709,7 @@
                         </td>
 
 
-                        <td class="amount-cell">
+                        <td class="amount-cell confidential-amount">
                             ₱{{ number_format(
                                 (float) ($payroll['total_deductions'] ?? 0),
                                 2
@@ -677,7 +717,7 @@
                         </td>
 
 
-                        <td class="amount-cell net-pay">
+                        <td class="amount-cell net-pay confidential-amount">
                             ₱{{ number_format(
                                 (float) ($payroll['net_pay'] ?? 0),
                                 2
