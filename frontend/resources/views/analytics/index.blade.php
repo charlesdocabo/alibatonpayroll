@@ -1135,23 +1135,23 @@
 <div id="ai-config-modal" role="dialog" aria-modal="true">
     <div class="modal-box">
         <div class="modal-header">
-            <h3 class="modal-title">⚙️ Google Gemini AI Configuration</h3>
+            <h3 class="modal-title">⚙️ OpenRouter &amp; Google Gemini AI Configuration</h3>
             <button type="button" class="close-modal-btn" onclick="closeConfigModal()">&times;</button>
         </div>
 
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:18px;font-size:13px;">
-            <div style="margin-bottom:6px;"><strong>Active Model:</strong> <code>Google Gemini 2.5 Flash</code></div>
-            <div style="margin-bottom:6px;"><strong>Active Gateway:</strong> {{ $aiProviderInfo['provider'] ?? 'OpenRouter / Google' }}</div>
+            <div style="margin-bottom:6px;"><strong>Target Model:</strong> <code>Google Gemini 2.5 Flash</code></div>
+            <div style="margin-bottom:6px;"><strong>API Gateway Provider:</strong> OpenRouter</div>
             <div><strong>Configured Key:</strong> <code>{{ $aiProviderInfo['key_preview'] ?? 'Loaded' }}</code></div>
         </div>
 
         <form id="keyConfigForm" onsubmit="handleKeyConfig(event)">
             @csrf
             <div class="form-group">
-                <label class="form-label" for="apiKeyInput">Update API Key (Google AI Studio or OpenRouter):</label>
-                <input type="text" id="apiKeyInput" class="form-input" placeholder="AIzaSy... or sk-or-v1-..." required />
+                <label class="form-label" for="apiKeyInput">Update OpenRouter API Key:</label>
+                <input type="text" id="apiKeyInput" class="form-input" placeholder="sk-or-v1-..." required />
                 <div class="form-help">
-                    Supports Google AI Studio Gemini API keys (starts with <code>AIzaSy...</code>) or OpenRouter API keys (starts with <code>sk-or-v1-...</code>).
+                    Your OpenRouter API key (starts with <code>sk-or-v1-...</code>) routes all requests to Google Gemini models.
                 </div>
             </div>
 
