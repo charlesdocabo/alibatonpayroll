@@ -297,12 +297,21 @@ Route::middleware(['auth', 'no-cache', 'active.user', \App\Http\Middleware\TwoFa
 
         /*
         |--------------------------------------------------------------------------
-        | HR Analytics
+        | HR Analytics (Powered by Google Gemini 2.5 Flash)
         |--------------------------------------------------------------------------
         */
 
         Route::get('/analytics', [AnalyticsController::class, 'index'])
             ->name('analytics.index');
+
+        Route::post('/analytics/gemini/ask', [AnalyticsController::class, 'askGemini'])
+            ->name('analytics.gemini.ask');
+
+        Route::post('/analytics/gemini/refresh', [AnalyticsController::class, 'refreshReport'])
+            ->name('analytics.gemini.refresh');
+
+        Route::post('/analytics/gemini/configure-key', [AnalyticsController::class, 'configureKey'])
+            ->name('analytics.gemini.configure-key');
 
     });
 

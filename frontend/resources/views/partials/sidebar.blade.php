@@ -338,7 +338,7 @@
         @endif
 
 
-        <!-- HR ANALYTICS - ADMIN + HR -->
+        <!-- HR ANALYTICS (GEMINI AI) - ADMIN + HR -->
 
         @if(in_array(auth()->user()->role, ['Admin', 'HR']))
 
@@ -346,8 +346,9 @@
                 href="{{ route('analytics.index') }}"
                 class="sidebar-link {{ request()->is('analytics*') ? 'active' : '' }}"
             >
-                <span class="sidebar-icon">◈</span>
+                <span class="sidebar-icon">✨</span>
                 <span>HR Analytics</span>
+                <span style="margin-left:auto;background:#F4C400;color:#111;font-size:10px;font-weight:800;padding:2px 6px;border-radius:10px;letter-spacing:0.5px;">GEMINI AI</span>
             </a>
 
         @endif
