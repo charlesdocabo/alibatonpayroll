@@ -214,17 +214,16 @@ class GeminiAnalyticsService
         $messages[] = ['role' => 'user', 'content' => $userPrompt];
 
         $modelsToTry = [
+            'liquid/lfm-2.5-2.6b:free',       // 100% active, instant response on free-tier OpenRouter keys
             $this->openrouterModel,
             'google/gemini-2.5-flash',
-            'google/gemini-2.0-flash-001',
-            'liquid/lfm-2.5-2.6b:free', // Fast, confirmed working with 100% success on free tier
             'google/gemma-4-26b-a4b-it:free',
             'apodex/apodex-1.1-mini:free',
         ];
 
         foreach (array_unique($modelsToTry) as $model) {
             try {
-                $response = Http::timeout(15)
+                $response = Http::timeout(25)
                     ->withToken($this->openrouterKey)
                     ->withHeaders([
                         'HTTP-Referer' => 'http://localhost:9000',
@@ -421,12 +420,46 @@ CONTEXT;
                 . "These benefits adhere to standard DOLE construction safety and health guidelines.";
         }
 
-        // General / Board / Strategic question
-        return "### 💡 Executive Response regarding \"{$question}\"\n\n"
-            . "For Alibaton Construction Inc., our current real-time enterprise metrics show:\n\n"
-            . "• **Workforce:** {$actEmp} active employees ({$totalEmp} total registered)\n"
-            . "• **Gross Payroll:** ₱" . number_format($totPay, 2) . " (Avg: ₱" . number_format($avgSal, 2) . ")\n"
-            . "• **Benefits & Claims:** ₱" . number_format($totBen, 2) . " in benefits, ₱" . number_format($totClm, 2) . " across {$clmRec} claims\n"
-            . "• **Key Recommendation:** Focus on maintaining current active deployment ratios above 85% and expediting the {$penClm} pending reimbursement claim(s).";
+        // Question about payslip / distribution / digital vs hard copy
+        if (str_contains($q, 'payslip') || str_contains($q, 'distribut') || str_contains($q, 'digital') || str_contains($q, 'hard copy') || str_contains($q, 'physical copy')) {
+            return "### 📑 Strategic Payslip Distribution Plan for Alibaton Construction Inc.\n\n"
+                . "For a construction firm with both office engineers and on-site field staff, a **hybrid distribution model** is recommended to ensure compliance with DOLE Labor Advisory No. 26:\n\n"
+                . "1. **Digital Payslips (Primary for Office & Field Engineers):**\n"
+                . "   • **Method:** Self-service download via the Alibaton Employee Portal or password-protected PDF emailed directly on payroll release day.\n"
+                . "   • **Advantages:** Immediate 24/7 access, encrypted confidentiality, zero printing costs, and digital timestamp logging for audit trails.\n\n"
+                . "2. **Hard Copy Payslips (Mandatory for Field Crews & Site Trades):**\n"
+                . "   • **Method:** Sealed physical pay slips distributed on-site by the Site Timekeeper or Project Engineer upon bi-monthly wage payout.\n"
+                . "   • **Requirement:** Secure signed payroll acknowledgment sheets (DOLE Rule VIII-A audit requirement) proving worker receipt.\n\n"
+                . "3. **Recommended Implementation Roadmap:**\n"
+                . "   • **Step 1:** Issue digital PDF copies instantly through the portal for all registered accounts.\n"
+                . "   • **Step 2:** Generate batch printable PDF payslips from the Payroll module for field workers without regular internet access.\n"
+                . "   • **Step 3:** Archive digital delivery receipts for 3 years to maintain statutory compliance.";
+        }
+
+        // Question about leave / attendance / absence
+        if (str_contains($q, 'leave') || str_contains($q, 'attendance') || str_contains($q, 'absence') || str_contains($q, 'vacation') || str_contains($q, 'sick')) {
+            return "### 🗓️ Workforce Attendance & Leave Framework\n\n"
+                . "Under Philippine Labor Code standards and construction operational requirements:\n\n"
+                . "• **Service Incentive Leave (SIL):** 5 days paid leave annually for employees with at least 1 year of service.\n"
+                . "• **Project Site Attendance:** Daily time records (DTR) directly feed into the payroll calculation engine to compute regular hours, overtime, and rest day premiums.\n"
+                . "• **Active Workforce Deployment:** Currently {$actEmp} out of {$totalEmp} personnel are on active duty ({$actRate}% deployment rate).";
+        }
+
+        // Question about retention / turnover / staffing
+        if (str_contains($q, 'retention') || str_contains($q, 'turnover') || str_contains($q, 'hire') || str_contains($q, 'hiring') || str_contains($q, 'staffing')) {
+            return "### 👥 Strategic Workforce Retention & Staffing Assessment\n\n"
+                . "For Alibaton Construction Inc.'s current team structure:\n\n"
+                . "• **Retention Metric:** {$actEmp} active personnel ({$actRate}% active retention ratio) across project sites.\n"
+                . "• **Key Drivers:** Competitive basic wages (average: ₱" . number_format($avgSal, 2) . ") supplemented by project milestone incentives (₱" . number_format($totInc, 2) . ").\n"
+                . "• **Action Plan:** Conduct quarterly skills re-evaluations and safety training certifications to minimize skilled trade turnover.";
+        }
+
+        // Contextual Executive Response addressing the specific question
+        return "### 💡 HR Advisory Response\n\n"
+            . "**Inquiry:** *\"{$question}\"*\n\n"
+            . "**Strategic Guidance for Alibaton Construction Inc.:**\n"
+            . "• Align all workforce protocols with Philippine Department of Labor and Employment (DOLE) standards and corporate governance.\n"
+            . "• Current baseline metrics indicate **{$actEmp} active staff** and a recorded gross payroll volume of **₱" . number_format($totPay, 2) . "**.\n"
+            . "• Prioritize transparent communication between site management and executive leadership to ensure operational continuity.";
     }
 }
