@@ -513,8 +513,9 @@
 
             <div class="user-area">
 
-                <button type="button" class="btn-privacy-toggle is-masked" id="dashboardPrivacyToggle" title="Toggle Confidential Mode (Mask/Unmask sensitive financial info)">
-                    🔒 <span>Masked</span>
+                <button type="button" class="btn-privacy-toggle is-masked" id="dashboardPrivacyToggle" title="Confidential Mode Active — sensitive amounts are hidden. Click to unmask.">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    <span>Masked</span>
                 </button>
 
                 <span class="user-name">
@@ -692,6 +693,8 @@
 <script>
 (function() {
     const STORAGE_KEY = 'alibaton_privacy_mask';
+    const svgEyeOff = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+    const svgEye    = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
 
     function isMasked() {
         const stored = localStorage.getItem(STORAGE_KEY);
@@ -711,7 +714,7 @@
             document.body.classList.remove('privacy-masked');
         }
 
-        document.querySelectorAll('.confidential-amount, .confidential-val').forEach(el => {
+        document.querySelectorAll('.confidential-amount, .confidential-val, .amount, .amount-cell, .amount-bold').forEach(el => {
             if (!el.hasAttribute('data-raw-val')) {
                 el.setAttribute('data-raw-val', el.textContent.trim());
             }
@@ -719,7 +722,7 @@
             if (masked) {
                 if (raw.startsWith('₱') || raw.includes('₱')) {
                     el.textContent = '₱••••••';
-                } else if (raw === '-' || raw === '—' || raw === 'N/A' || raw === '0' || raw === '0.00') {
+                } else if (raw === '-' || raw === '—' || raw === 'N/A' || raw === '0' || raw === '0.00' || raw === '') {
                     el.textContent = raw;
                 } else {
                     el.textContent = '••••••';
@@ -731,15 +734,15 @@
     }
 
     function updateToggleButtons(masked) {
-        document.querySelectorAll('.btn-privacy-toggle').forEach(btn => {
+        document.querySelectorAll('.btn-privacy-toggle, .btn-privacy-page-toggle').forEach(btn => {
             if (masked) {
                 btn.classList.add('is-masked');
-                btn.innerHTML = '🔒 <span>Masked</span>';
-                btn.setAttribute('title', 'Confidential Mode Active: Sensitive salary/payout amounts are hidden (₱••••••). Click to unmask.');
+                btn.innerHTML = svgEyeOff + ' <span>Masked</span>';
+                btn.setAttribute('title', 'Confidential Mode Active — sensitive amounts are hidden (₱••••••). Click to unmask.');
             } else {
                 btn.classList.remove('is-masked');
-                btn.innerHTML = '👁️ <span>Unmasked</span>';
-                btn.setAttribute('title', 'Confidential Mode Inactive: Full financial amounts visible. Click to mask.');
+                btn.innerHTML = svgEye + ' <span>Unmasked</span>';
+                btn.setAttribute('title', 'Confidential Mode Inactive — full financial amounts are visible. Click to mask.');
             }
         });
     }
@@ -752,7 +755,7 @@
         setMaskedState(isMasked());
 
         document.addEventListener('click', function(e) {
-            const btn = e.target.closest('.btn-privacy-toggle');
+            const btn = e.target.closest('.btn-privacy-toggle, .btn-privacy-page-toggle');
             if (btn) {
                 e.preventDefault();
                 window.togglePrivacyMask();

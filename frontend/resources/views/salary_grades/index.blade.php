@@ -671,6 +671,11 @@
                 </button>
             </div>
 
+            <button type="button" class="btn-privacy-page-toggle is-masked" title="Confidential Mode Active — sensitive amounts are hidden. Click to unmask." style="display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:#111111;color:#f4c400;border:1px solid #111111;transition:all 0.2s;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                <span>Masked</span>
+            </button>
+
             <button type="button" onclick="window.print()" class="btn-action outline">
                 🖨 Print Official Audit
             </button>
@@ -701,19 +706,19 @@
 
         <div class="summary-card success">
             <div class="summary-label">Lowest Minimum Pay</div>
-            <div class="summary-value" id="kpi_lowest_min">₱{{ number_format($lowestMinimumSalary ?? 0, 2) }}</div>
+            <div class="summary-value confidential-amount" id="kpi_lowest_min">₱{{ number_format($lowestMinimumSalary ?? 0, 2) }}</div>
             <div class="summary-note">Entry baseline</div>
         </div>
 
         <div class="summary-card dark">
             <div class="summary-label">Highest Maximum Pay</div>
-            <div class="summary-value" id="kpi_highest_max">₱{{ number_format($highestMaximumSalary ?? 0, 2) }}</div>
+            <div class="summary-value confidential-amount" id="kpi_highest_max">₱{{ number_format($highestMaximumSalary ?? 0, 2) }}</div>
             <div class="summary-note">Executive ceiling</div>
         </div>
 
         <div class="summary-card warning">
             <div class="summary-label">Average Minimum Pay</div>
-            <div class="summary-value" id="kpi_avg_min">₱{{ number_format($averageMinimumSalary ?? 0, 2) }}</div>
+            <div class="summary-value confidential-amount" id="kpi_avg_min">₱{{ number_format($averageMinimumSalary ?? 0, 2) }}</div>
             <div class="summary-note">Market standard</div>
         </div>
     </div>
@@ -791,9 +796,9 @@
                         <tr data-name="{{ strtolower($salaryGrade['grade_name'] ?? '') }}"
                             data-desc="{{ strtolower($salaryGrade['description'] ?? '') }}">
                             <td><strong>{{ $salaryGrade['grade_name'] ?? '-' }}</strong></td>
-                            <td class="salary-amount" style="text-align:right;">₱{{ number_format((float)($salaryGrade['minimum_salary'] ?? 0), 2) }}</td>
-                            <td class="salary-amount" style="text-align:right;">₱{{ number_format((float)($salaryGrade['maximum_salary'] ?? 0), 2) }}</td>
-                            <td class="salary-amount" style="text-align:right; color:#2563eb;">+₱{{ number_format($spread, 2) }}</td>
+                            <td class="salary-amount confidential-amount" style="text-align:right;">₱{{ number_format((float)($salaryGrade['minimum_salary'] ?? 0), 2) }}</td>
+                            <td class="salary-amount confidential-amount" style="text-align:right;">₱{{ number_format((float)($salaryGrade['maximum_salary'] ?? 0), 2) }}</td>
+                            <td class="salary-amount confidential-amount" style="text-align:right; color:#2563eb;">+₱{{ number_format($spread, 2) }}</td>
                             <td style="text-align:center;">
                                 <span style="display:inline-block;padding:3px 9px;background:#e8f5e9;color:#2e7d32;border-radius:12px;font-size:11px;font-weight:bold;">
                                     {{ $gradeEmployeeCount[$salaryGrade['id']] ?? 0 }} employee(s)
@@ -878,7 +883,7 @@
                                 <div>{{ $assignment['position'] }}</div>
                                 <div style="font-size:11px; color:#666;">{{ $assignment['department'] }}</div>
                             </td>
-                            <td class="salary-amount" style="text-align:right;">₱{{ number_format($assignment['salary'], 2) }}</td>
+                            <td class="salary-amount confidential-amount" style="text-align:right;">₱{{ number_format($assignment['salary'], 2) }}</td>
                             <td>
                                 <span class="grade-badge">{{ $assignment['grade'] }}</span>
                             </td>

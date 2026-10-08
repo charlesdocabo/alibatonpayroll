@@ -224,7 +224,7 @@
                         {{ $employee['department'] ?? 'N/A' }}
                     </td>
 
-                    <td>
+                    <td class="confidential-amount">
                         ₱{{ number_format((float)($employee['salary'] ?? 0), 2) }}
                     </td>
 
