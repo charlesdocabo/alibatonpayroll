@@ -548,44 +548,71 @@
                 </p>
 
             </div>
+            
+<!-- STATISTICS -->
+<div class="stats">
+
+    <div class="stat-card">
+        <div class="stat-label">Total Employees</div>
+        <div class="stat-value">
+            {{ number_format((int) ($analytics['total_employees'] ?? count($employees['data'] ?? []))) }}
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Active Employees</div>
+        <div class="stat-value">
+            {{ number_format((int) ($analytics['active_employees'] ?? 0)) }}
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Payroll Records</div>
+        <div class="stat-value">
+            {{ number_format((int) ($analytics['payroll_records'] ?? count($payrolls['data'] ?? []))) }}
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Total Payroll</div>
+        <div class="stat-value confidential-amount">
+            ₱{{ number_format((float) ($analytics['total_payroll'] ?? 0), 2) }}
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Net Payroll</div>
+        <div class="stat-value confidential-amount">
+            ₱{{ number_format((float) ($analytics['total_net_payroll'] ?? 0), 2) }}
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Total Benefits</div>
+        <div class="stat-value confidential-amount">
+            ₱{{ number_format((float) ($analytics['total_benefits'] ?? 0), 2) }}
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Pending Claims</div>
+        <div class="stat-value">
+            {{ number_format((int) ($analytics['pending_claims'] ?? 0)) }}
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Total Incentives</div>
+        <div class="stat-value confidential-amount">
+            ₱{{ number_format((float) ($analytics['total_incentives'] ?? 0), 2) }}
+        </div>
+    </div>
+
+</div>
+<!-- END STATISTICS -->
 
 
-            <!-- STATISTICS -->
-            <div class="stats">
 
-                <div class="stat-card">
-                    <div class="stat-label">Total Employees</div>
-
-                    <div class="stat-value">
-                        {{ count($employees['data'] ?? []) }}
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-label">Payroll Records</div>
-
-                    <div class="stat-value">
-                        {{ count($payrolls['data'] ?? []) }}
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-label">Benefits</div>
-
-                    <div class="stat-value">
-                        {{ count($benefits['data'] ?? []) }}
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-label">Claims</div>
-
-                    <div class="stat-value">
-                        {{ count($claims['data'] ?? []) }}
-                    </div>
-                </div>
-
-            </div>
 
 
             <!-- EMPLOYEES -->

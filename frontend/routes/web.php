@@ -259,6 +259,14 @@ Route::middleware(['auth', 'no-cache', 'active.user', \App\Http\Middleware\TwoFa
 
         Route::patch('/claims/{claim}/return', [ClaimsController::class, 'returnClaim'])
             ->name('claims.return');
+        
+
+// Petty Cash management — Admin/HR only
+Route::post('/claims/petty-cash/add-funds', [ClaimsController::class, 'addPettyCashFunds'])
+    ->name('claims.petty-cash.add-funds');
+
+Route::post('/claims/{claim}/pay', [ClaimsController::class, 'payClaim'])
+    ->name('claims.pay');
 
 
         /*

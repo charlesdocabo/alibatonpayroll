@@ -26,7 +26,7 @@ class ClaimController extends Controller
             'description'    => 'nullable|string',
             'amount'         => 'required|numeric|min:0',
             'claim_date'     => 'required|date',
-            'status'         => 'nullable|in:pending,approved,rejected,paid,returned',
+            'status' => 'nullable|in:pending,approved,rejected,returned',
             'approved_by'    => 'nullable|string|max:100',
             'approval_notes' => 'nullable|string',
             'approved_at'    => 'nullable|date',
@@ -53,13 +53,19 @@ class ClaimController extends Controller
 
     public function update(Request $request, Claim $claim)
     {
+        if ($claim->status === 'paid') {
+    return response()->json([
+        'success' => false,
+        'message' => 'Paid claims cannot be edited.',
+    ], 422);
+}
         $validated = $request->validate([
             'employee_id'    => 'sometimes|required|string|max:50',
             'claim_type'     => 'sometimes|required|string|max:100',
             'description'    => 'nullable|string',
             'amount'         => 'sometimes|required|numeric|min:0',
             'claim_date'     => 'sometimes|required|date',
-            'status'         => 'sometimes|in:pending,approved,rejected,paid,returned',
+            'status'         => 'sometimes|in:pending,approved,rejected,returned',
             'approved_by'    => 'nullable|string|max:100',
             'approval_notes' => 'nullable|string',
             'approved_at'    => 'nullable|date',
@@ -79,6 +85,12 @@ class ClaimController extends Controller
     public function destroy(Claim $claim)
     {
         $claim->delete();
+        if ($claim->status === 'paid') {
+    return response()->json([
+        'success' => false,
+        'message' => 'Paid claims cannot be deleted because they have payment records.',
+    ], 422);
+}
 
         return response()->json([
             'success' => true,
@@ -92,6 +104,12 @@ class ClaimController extends Controller
     public function approve(Request $request, $id)
     {
         $claim = Claim::findOrFail($id);
+        if ($claim->status === 'paid') {
+    return response()->json([
+        'success' => false,
+        'message' => 'Paid claims cannot be approved again.',
+    ], 422);
+}
 
         $validated = $request->validate([
             'approved_by'    => 'required|string|max:100',
@@ -118,6 +136,12 @@ class ClaimController extends Controller
     public function reject(Request $request, $id)
     {
         $claim = Claim::findOrFail($id);
+        if ($claim->status === 'paid') {
+    return response()->json([
+        'success' => false,
+        'message' => 'Paid claims cannot be rejected.',
+    ], 422);
+}
 
         $validated = $request->validate([
             'approved_by'    => 'required|string|max:100',
@@ -144,6 +168,12 @@ class ClaimController extends Controller
     public function returnForRevision(Request $request, $id)
     {
         $claim = Claim::findOrFail($id);
+        if ($claim->status === 'paid') {
+    return response()->json([
+        'success' => false,
+        'message' => 'Paid claims cannot be returned for revision.',
+    ], 422);
+}
 
         $validated = $request->validate([
             'approved_by'   => 'required|string|max:100',

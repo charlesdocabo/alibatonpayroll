@@ -391,5 +391,55 @@ Route::delete('/salary-grades/{id}', function ($id) {
 Route::get('/analytics', function () {
     return Http::get('http://analytics-service:8000/api/analytics')->json();
 });
+// =========================
+// PETTY CASH
+// =========================
+
+Route::get('/petty-cash/balance', function () {
+    $response = Http::get(
+        'http://claims-service:8000/api/petty-cash/balance'
+    );
+
+    return response()->json(
+        $response->json(),
+        $response->status()
+    );
+});
+
+Route::get('/petty-cash/transactions', function () {
+    $response = Http::get(
+        'http://claims-service:8000/api/petty-cash/transactions'
+    );
+
+    return response()->json(
+        $response->json(),
+        $response->status()
+    );
+});
+
+Route::post('/petty-cash/add-funds', function () {
+    $response = Http::post(
+        'http://claims-service:8000/api/petty-cash/add-funds',
+        request()->all()
+    );
+
+    return response()->json(
+        $response->json(),
+        $response->status()
+    );
+});
+
+Route::post('/claims/{id}/pay', function ($id) {
+    $response = Http::post(
+        "http://claims-service:8000/api/claims/{$id}/pay",
+        request()->all()
+    );
+
+    return response()->json(
+        $response->json(),
+        $response->status()
+    );
+});
+
 
 

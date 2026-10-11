@@ -19,21 +19,102 @@ class EmployeeController extends Controller
     /**
      * Display all employees.
      */
-    public function index(): View
-    {
-        $response = Http::timeout(10)
-            ->get($this->gateway . '/api/employees');
+    
+public function index(Request $request): View
+{
+    $response = Http::timeout(10)
+        ->get($this->gateway . '/api/employees');
 
-        if (!$response->successful()) {
-            return view('employees.index', [
-                'employees' => [],
-            ])->with('error', 'Unable to load employees from Employee Service.');
-        }
+    $search = trim((string) $request->query('search', ''));
+    $department = trim((string) $request->query('department', ''));
+    $status = strtolower(trim((string) $request->query('status', '')));
 
-        $employees = $response->json('data', []);
-
-        return view('employees.index', compact('employees'));
+    if (!$response->successful()) {
+        return view('employees.index', [
+            'employees' => [],
+            'departments' => [],
+            'search' => $search,
+            'department' => $department,
+            'status' => $status,
+            'totalEmployees' => 0,
+        ])->with('error', 'Unable to load employees from Employee Service.');
     }
+
+    $allEmployees = $response->json('data', []);
+
+    if (!is_array($allEmployees)) {
+        $allEmployees = [];
+    }
+
+    $departments = collect($allEmployees)
+        ->map(fn ($employee) => trim((string) ($employee['department'] ?? '')))
+        ->filter(fn ($value) => $value !== '')
+        ->unique(fn ($value) => strtolower($value))
+        ->sort()
+        ->values()
+        ->all();
+
+    $filteredEmployees = collect($allEmployees)
+        ->filter(function ($employee) use ($search) {
+            if ($search === '') {
+                return true;
+            }
+
+            $name = trim(
+                ($employee['first_name'] ?? '') . ' ' .
+                ($employee['last_name'] ?? '')
+            );
+
+            foreach ([
+                $employee['employee_id'] ?? '',
+                $name,
+                $employee['email'] ?? '',
+            ] as $value) {
+                if (stripos((string) $value, $search) !== false) {
+                    return true;
+                }
+            }
+
+            return false;
+        })
+        ->filter(function ($employee) use ($department) {
+            return $department === ''
+                || strcasecmp(
+                    trim((string) ($employee['department'] ?? '')),
+                    $department
+                ) === 0;
+        })
+        ->filter(function ($employee) use ($status) {
+            return $status === ''
+                || strtolower(
+                    trim((string) ($employee['status'] ?? ''))
+                ) === $status;
+        })
+        ->values();
+
+    $perPage = 10;
+    $currentPage = max(1, $request->integer('page', 1));
+
+    $employees = new \Illuminate\Pagination\LengthAwarePaginator(
+        $filteredEmployees->forPage($currentPage, $perPage)->values(),
+        $filteredEmployees->count(),
+        $perPage,
+        $currentPage,
+        [
+            'path' => $request->url(),
+            'query' => $request->query(),
+        ]
+    );
+
+    return view('employees.index', [
+        'employees' => $employees,
+        'departments' => $departments,
+        'search' => $search,
+        'department' => $department,
+        'status' => $status,
+        'totalEmployees' => $filteredEmployees->count(),
+    ]);
+}
 
     /**
      * Show create employee form.

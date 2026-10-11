@@ -101,6 +101,42 @@ class ClaimsController extends Controller
                         }),
                     ];
                 });
+// =========================
+// PETTY CASH MONITORING
+// =========================
+
+$pettyCashBalance = 0;
+$pettyCashTransactions = collect();
+
+if (!$isEmployee) {
+    try {
+        $balanceResponse = Http::timeout(5)->get(
+            $this->gateway . '/api/petty-cash/balance'
+        );
+
+        if ($balanceResponse->successful()) {
+            $pettyCashBalance = (float) (
+                $balanceResponse->json('data.current_balance', 0)
+            );
+        }
+
+        $transactionsResponse = Http::timeout(5)->get(
+            $this->gateway . '/api/petty-cash/transactions'
+        );
+
+        if ($transactionsResponse->successful()) {
+            $transactionsData = $transactionsResponse->json('data', []);
+
+            if (is_array($transactionsData)) {
+                $pettyCashTransactions = collect($transactionsData);
+            }
+        }
+    } catch (\Exception $e) {
+        // Keep the Claims dashboard available if Petty Cash is unreachable.
+        report($e);
+    }
+}
+
 
             return view('claims.index', compact(
                 'claims',
@@ -113,7 +149,9 @@ class ClaimsController extends Controller
                 'approvedClaimAmount',
                 'pendingClaimAmount',
                 'claimTypeBreakdown',
-                'isEmployee'
+'isEmployee',
+'pettyCashBalance',
+'pettyCashTransactions'
             ));
 
         } catch (\Exception $e) {
@@ -130,6 +168,8 @@ class ClaimsController extends Controller
                 'pendingClaimAmount' => 0,
                 'claimTypeBreakdown' => collect(),
                 'isEmployee'         => $isEmployee,
+                'pettyCashBalance'      => 0,
+                'pettyCashTransactions' => collect(),
                 'error'              => 'Connection Error: ' . $e->getMessage(),
             ]);
         }
@@ -546,4 +586,105 @@ class ClaimsController extends Controller
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
+    
+    /**
+     * Add money to the Petty Cash fund (Admin/HR only via web route).
+     */
+    public function addPettyCashFunds(Request $request)
+    {
+        $validated = $request->validate([
+            'amount' => 'required|numeric|gt:0|max:9999999999.99',
+            'description' => 'nullable|string|max:1000',
+            'reference_number' => 'nullable|string|max:100',
+        ]);
+
+        $user = auth()->user();
+        $performedBy = $user->name ?? $user->email ?? 'System';
+
+        try {
+            $response = Http::timeout(10)->post(
+                $this->gateway . '/api/petty-cash/add-funds',
+                [
+                    'amount' => $validated['amount'],
+                    'description' => $validated['description'] ?? 'Petty Cash fund added',
+                    'reference_number' => $validated['reference_number'] ?? null,
+                    'performed_by' => $performedBy,
+                ]
+            );
+
+            if ($response->successful()) {
+                AuditLog::create([
+                    'user_id' => auth()->id(),
+                    'action' => 'PETTY_CASH_FUNDS_ADDED',
+                    'description' => 'Added ₱'
+                        . number_format((float) $validated['amount'], 2)
+                        . ' to Petty Cash fund.',
+                    'ip_address' => $request->ip(),
+                ]);
+
+                return redirect('/claims')
+                    ->with('success', 'Petty Cash funds added successfully.');
+            }
+
+            return back()->withInput()->with(
+                'error',
+                'Unable to add funds: ' .
+                ($response->json('message') ?? 'Petty Cash service error.')
+            );
+        } catch (\Exception $e) {
+            report($e);
+
+            return back()->withInput()
+                ->with('error', 'Unable to connect to the Petty Cash service.');
+        }
+    }
+
+    /**
+     * Pay an approved claim using Petty Cash (Admin/HR only via web route).
+     */
+    public function payClaim(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'reference_number' => 'nullable|string|max:100',
+        ]);
+
+        $user = auth()->user();
+        $performedBy = $user->name ?? $user->email ?? 'System';
+
+        try {
+            $response = Http::timeout(10)->post(
+                $this->gateway . '/api/claims/' . $id . '/pay',
+                [
+                    'performed_by' => $performedBy,
+                    'reference_number' => $validated['reference_number'] ?? null,
+                ]
+            );
+
+            if ($response->successful()) {
+                AuditLog::create([
+                    'user_id' => auth()->id(),
+                    'action' => 'CLAIM_PAID',
+                    'description' => 'Paid claim ID: ' . $id
+                        . ' using Petty Cash.',
+                    'ip_address' => $request->ip(),
+                ]);
+
+                return redirect('/claims')
+                    ->with('success', 'Claim paid and Petty Cash balance deducted.');
+            }
+
+            return redirect('/claims')->with(
+                'error',
+                'Unable to pay claim: ' .
+                ($response->json('message') ?? 'Check claim status and Petty Cash balance.')
+            );
+        } catch (\Exception $e) {
+            report($e);
+
+            return redirect('/claims')
+                ->with('error', 'Unable to connect to the Claims service.');
+        }
+    }
+
 }
+

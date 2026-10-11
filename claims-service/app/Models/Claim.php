@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Claim extends Model
 {
@@ -25,4 +26,9 @@ class Claim extends Model
         'claim_date' => 'date',
         'approved_at' => 'datetime',
     ];
+
+    public function pettyCashTransactions(): HasMany
+{
+    return $this->hasMany(PettyCashTransaction::class);
+}
 }

@@ -183,6 +183,77 @@
 
 <div class="table-container">
 
+<!-- Employee Search and Filters -->
+<form method="GET" action="{{ route('employees.index') }}"
+      style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:20px; align-items:end;">
+
+    <div style="flex:1; min-width:200px;">
+        <label for="search" style="display:block; margin-bottom:6px; font-weight:bold;">
+            Search Employee
+        </label>
+        <input
+            type="text"
+            id="search"
+            name="search"
+            value="{{ $search ?? request('search') }}"
+            placeholder="Employee ID, name, or email"
+            style="width:100%; padding:10px; border:1px solid #ccc; border-radius:5px;"
+        >
+    </div>
+
+    <div style="flex:1; min-width:160px;">
+        <label for="department" style="display:block; margin-bottom:6px; font-weight:bold;">
+            Department
+        </label>
+        <select
+            id="department"
+            name="department"
+            style="width:100%; padding:10px; border:1px solid #ccc; border-radius:5px;"
+        >
+            <option value="">All Departments</option>
+            @foreach(($departments ?? []) as $dept)
+                <option value="{{ $dept }}"
+                    {{ ($department ?? request('department')) === $dept ? 'selected' : '' }}>
+                    {{ $dept }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+
+    <div style="flex:1; min-width:140px;">
+        <label for="status" style="display:block; margin-bottom:6px; font-weight:bold;">
+            Status
+        </label>
+        <select
+            id="status"
+            name="status"
+            style="width:100%; padding:10px; border:1px solid #ccc; border-radius:5px;"
+        >
+            <option value="">All Statuses</option>
+            <option value="active" {{ ($status ?? request('status')) === 'active' ? 'selected' : '' }}>
+                Active
+            </option>
+            <option value="inactive" {{ ($status ?? request('status')) === 'inactive' ? 'selected' : '' }}>
+                Inactive
+            </option>
+        </select>
+    </div>
+
+    <button type="submit"
+        style="background:#f4c400; color:#111; padding:11px 18px; border:0; border-radius:5px; font-weight:bold; cursor:pointer;">
+        Search / Filter
+    </button>
+
+    <a href="{{ route('employees.index') }}"
+       style="background:#eee; color:#111; padding:11px 18px; border-radius:5px; text-decoration:none;">
+        Clear Filters
+    </a>
+</form>
+
+<p style="margin:0 0 15px; color:#555;">
+    Showing <strong>{{ $totalEmployees ?? count($employees) }}</strong> employee(s)
+</p>
+
     <table>
 
         <thead>
@@ -194,7 +265,6 @@
                 <th>Department</th>
                 <th>Salary</th>
                 <th>Status</th>
-                <th>Actions</th>
             </tr>
         </thead>
 
@@ -246,26 +316,6 @@
 
                     <td>
 
-                   <a href="/employees/{{ $employee['employee_id'] }}/edit"
-   class="action-button edit-button">
-    Edit
-</a>
-
-<form action="/employees/{{ $employee['employee_id'] }}"
-      method="POST"
-                              style="display:inline;">
-
-                            @csrf
-                            @method('DELETE')
-
-                            <button type="submit"
-                                    class="action-button delete-button"
-                                    onclick="return confirm('Are you sure you want to delete this employee?')">
-                                Delete
-                            </button>
-
-                        </form>
-
                     </td>
 
                 </tr>
@@ -283,6 +333,20 @@
         </tbody>
 
     </table>
+
+    
+@if ($employees instanceof \Illuminate\Pagination\LengthAwarePaginator)
+    <div class="pagination-container" style="margin-top: 20px;">
+        <p>
+            Showing {{ $employees->firstItem() ?? 0 }}
+            to {{ $employees->lastItem() ?? 0 }}
+            of {{ $employees->total() }} employees
+        </p>
+
+        {{ $employees->links() }}
+    </div>
+@endif
+
 
 </div>
 

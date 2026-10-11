@@ -570,6 +570,108 @@ tbody tr:hover { background: #fffdf0; }
     </div>
 </div>
 
+{{-- =====================================================
+     PETTY CASH FUND
+===================================================== --}}
+@if(!($isEmployee ?? false))
+<div class="card" style="margin-bottom:22px;">
+    <div class="card-header">
+        <div>
+            <h3 style="margin:0;">Petty Cash Fund</h3>
+            <p style="margin:5px 0 0;color:#888;font-size:13px;">
+                Available fund and recent transactions
+            </p>
+        </div>
+    </div>
+
+    <div style="padding:20px;">
+        
+<form action="{{ route('claims.petty-cash.add-funds') }}" method="POST"
+      style="padding:18px;margin-bottom:20px;background:#f8fafc;border-radius:10px;">
+    @csrf
+
+    <h4 style="margin-top:0;">Add Funds to Petty Cash</h4>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+        <div>
+            <label for="petty_cash_amount">Amount (₱)</label>
+            <input id="petty_cash_amount" type="number" name="amount"
+                   min="0.01" step="0.01" required
+                   placeholder="Enter amount"
+                   style="width:100%;padding:10px;margin-top:6px;">
+        </div>
+
+        <div>
+            <label for="petty_cash_reference">Reference Number (optional)</label>
+            <input id="petty_cash_reference" type="text" name="reference_number"
+                   maxlength="100" placeholder="OR / deposit reference"
+                   style="width:100%;padding:10px;margin-top:6px;">
+        </div>
+
+        <div>
+            <label for="petty_cash_description">Description (optional)</label>
+            <input id="petty_cash_description" type="text" name="description"
+                   maxlength="1000" placeholder="e.g. Initial fund"
+                   style="width:100%;padding:10px;margin-top:6px;">
+        </div>
+    </div>
+
+    <button type="submit"
+            onclick="return confirm('Confirm adding this amount to Petty Cash?')"
+            style="margin-top:14px;padding:10px 16px;border:0;border-radius:6px;background:#15803d;color:white;cursor:pointer;">
+        Add Funds
+    </button>
+</form>
+
+        <div class="kpi-card success" style="margin-bottom:20px;">
+            <div class="kpi-label">Available Petty Cash</div>
+            <div class="kpi-value confidential-amount">
+                ₱{{ number_format($pettyCashBalance ?? 0, 2) }}
+            </div>
+        </div>
+
+        <h4 style="margin-bottom:12px;">Recent Transactions</h4>
+
+        @if(($pettyCashTransactions ?? collect())->isNotEmpty())
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Balance After</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($pettyCashTransactions as $transaction)
+                            <tr>
+                                <td>
+                                    {{ !empty($transaction['created_at'])
+                                        ? \Illuminate\Support\Carbon::parse($transaction['created_at'])->format('M d, Y h:i A')
+                                        : '—' }}
+                                </td>
+                                <td>
+                                    {{ ucwords(str_replace('_', ' ', $transaction['transaction_type'] ?? '—')) }}
+                                </td>
+                                <td>{{ $transaction['description'] ?? '—' }}</td>
+                                <td>
+                                    {{ ($transaction['direction'] ?? '') === 'out' ? '−' : '+' }}₱{{ number_format((float)($transaction['amount'] ?? 0), 2) }}
+                                </td>
+                                <td>₱{{ number_format((float)($transaction['balance_after'] ?? 0), 2) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @else
+            <p style="color:#888;">No Petty Cash transactions yet.</p>
+        @endif
+    </div>
+</div>
+@endif
+
 
 {{-- =====================================================
      CHARTS
@@ -638,9 +740,11 @@ tbody tr:hover { background: #fffdf0; }
                         <th>Description</th>
                         <th>Amount</th>
                         <th>Claim Date</th>
+                        <th>Receipt</th>
                         <th>Status</th>
                         <th>Approver / Notes</th>
                         <th class="actions">Actions</th>
+
                     </tr>
                 </thead>
                 <tbody id="claimsBody">
@@ -690,9 +794,25 @@ tbody tr:hover { background: #fffdf0; }
                                 @endif
                             </td>
 
-                            <td>
-                                <span class="status {{ $statusClass }}">{{ $status }}</span>
-                            </td>
+                            
+{{-- RECEIPT --}}
+<td>
+    @if(!empty($claim['receipt_path']))
+        <a href="{{ asset('storage/' . ltrim($claim['receipt_path'], '/')) }}"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="btn-act btn-edit">
+            View Receipt
+        </a>
+    @else
+        <span style="color:#999;">No receipt</span>
+    @endif
+</td>
+
+{{-- STATUS --}}
+<td>
+    <span class="status {{ $statusClass }}">{{ $status }}</span>
+</td>
 
                             <td>
                                 @if(!empty($claim['approved_by']))
@@ -744,6 +864,27 @@ tbody tr:hover { background: #fffdf0; }
                                         ↩ Return
                                     </button>
                                 @endif
+                                
+{{-- PAY CLAIM: Approved claims only --}}
+@if($isAdminOrHr && strtolower($claim['status'] ?? '') === 'approved')
+    <form action="{{ route('claims.pay', $claim['id']) }}"
+          method="POST"
+          style="display:inline;"
+          onsubmit="return confirm('Confirm payment of ₱{{ number_format((float)($claim['amount'] ?? 0), 2) }} from Petty Cash?');">
+        @csrf
+        <input type="text"
+               name="reference_number"
+               maxlength="100"
+               placeholder="Payment reference (optional)"
+               aria-label="Payment reference"
+               style="width:145px;padding:6px;margin-bottom:4px;">
+        <button type="submit" class="btn-act btn-approve">
+            ₱ Pay Claim
+        </button>
+    </form>
+@endif
+
+
 
                                 {{-- EDIT --}}
                                 @if($isAdminOrHr)

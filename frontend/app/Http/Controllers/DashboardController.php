@@ -8,35 +8,31 @@ class DashboardController extends Controller
 {
     public function index()
     {
-       $gateway = config('services.gateway.url');
+        $gateway = config('services.gateway.url', 'http://api-gateway:8000');
 
-        $employees = Http::timeout(10)
-            ->get($gateway . '/api/employees')
-            ->json();
+        $fetchData = function (string $endpoint): array {
+            try {
+                $response = Http::timeout(10)->get($endpoint);
 
-        $payrolls = Http::timeout(10)
-            ->get($gateway . '/api/payrolls')
-            ->json();
+                if ($response->successful()) {
+                    return $response->json() ?? [];
+                }
+            } catch (\Throwable $e) {
+                report($e);
+            }
 
-        $benefits = Http::timeout(10)
-            ->get($gateway . '/api/benefits')
-            ->json();
+            return [];
+        };
 
-        $claims = Http::timeout(10)
-            ->get($gateway . '/api/claims')
-            ->json();
+        $employees = $fetchData($gateway . '/api/employees');
+        $payrolls = $fetchData($gateway . '/api/payrolls');
+        $benefits = $fetchData($gateway . '/api/benefits');
+        $claims = $fetchData($gateway . '/api/claims');
+        $incentives = $fetchData($gateway . '/api/incentives');
+        $salaryGrades = $fetchData($gateway . '/api/salary-grades');
+        $analyticsResponse = $fetchData($gateway . '/api/analytics');
 
-        $incentives = Http::timeout(10)
-            ->get($gateway . '/api/incentives')
-            ->json();
-
-        $salaryGrades = Http::timeout(10)
-            ->get($gateway . '/api/salary-grades')
-            ->json();
-
-        $analytics = Http::timeout(10)
-            ->get($gateway . '/api/analytics')
-            ->json();
+        $analytics = $analyticsResponse['data'] ?? [];
 
         return view('dashboard', compact(
             'employees',
