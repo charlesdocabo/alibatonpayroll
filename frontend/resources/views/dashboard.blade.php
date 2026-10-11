@@ -410,6 +410,13 @@
             <span class="menu-icon">₱</span>
             Payroll
         </a>
+        
+<a href="{{ route('payroll-disputes.index') }}"
+   class="{{ request()->is('payroll-disputes*') ? 'active' : '' }}">
+    <span class="menu-icon">⚖</span>
+    Payroll Disputes
+</a>
+
 
 
         <div class="menu-title">
@@ -484,10 +491,20 @@
 
        @endif
 
+    {{-- PAYROLL DISPUTES - EMPLOYEE ONLY --}}
+    @if(auth()->user()->role === 'Employee')
+        <a href="{{ route('my-payroll-disputes.index') }}"
+           class="{{ request()->is('my-payroll-disputes*') ? 'active' : '' }}">
+            <span class="menu-icon">⚖</span>
+            My Payroll Disputes
+        </a>
+    @endif
+
     {{-- PROFILE - ALL AUTHENTICATED USERS --}}
     <div class="menu-title">
         Account
     </div>
+
 
     <a href="{{ route('profile.edit') }}"
        class="{{ request()->is('profile*') ? 'active' : '' }}">

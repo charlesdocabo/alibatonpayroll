@@ -9,6 +9,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\BenefitsController;
 use App\Http\Controllers\ClaimsController;
+use App\Http\Controllers\PayrollDisputeController;
 use App\Http\Controllers\IncentivesController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\UserManagementController;
@@ -82,6 +83,22 @@ Route::middleware(['auth', 'no-cache', 'active.user', \App\Http\Middleware\TwoFa
             ->name('my-claims.store');
     });
 
+            
+        // Payroll Disputes - Employee
+        Route::get('/my-payroll-disputes', [PayrollDisputeController::class, 'index'])
+            ->name('my-payroll-disputes.index');
+        
+       Route::get('/my-payroll-disputes/create', [PayrollDisputeController::class, 'create'])
+    ->name('my-payroll-disputes.create');
+
+Route::get('/my-payroll-disputes/{id}', [PayrollDisputeController::class, 'show'])
+    ->whereNumber('id')
+    ->name('my-payroll-disputes.show');
+        Route::post('/my-payroll-disputes', [PayrollDisputeController::class, 'store'])
+            ->name('my-payroll-disputes.store');
+    });
+
+
 
     /*
     |--------------------------------------------------------------------------
@@ -139,6 +156,22 @@ Route::middleware(['auth', 'no-cache', 'active.user', \App\Http\Middleware\TwoFa
     */
 
     Route::middleware('role:Admin,HR')->group(function () {
+        
+        /*
+        |--------------------------------------------------------------------------
+        | Payroll Disputes - Admin/HR
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get('/payroll-disputes', [PayrollDisputeController::class, 'index'])
+            ->name('payroll-disputes.index');
+
+        Route::get('/payroll-disputes/{id}', [PayrollDisputeController::class, 'show'])
+            ->name('payroll-disputes.show');
+
+        Route::put('/payroll-disputes/{id}', [PayrollDisputeController::class, 'update'])
+            ->name('payroll-disputes.update');
+
 
         /*
         |--------------------------------------------------------------------------
@@ -409,8 +442,6 @@ Route::patch('/email-change-requests/{emailChangeRequest}/reject', [AdminEmailCh
             ->name('salary-grades.destroy');
 
     });
-
-});
 
 
 /*

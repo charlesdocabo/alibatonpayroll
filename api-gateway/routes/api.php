@@ -125,6 +125,47 @@ Route::delete('/payrolls/{id}', function ($id) {
         $response->status()
     );
 });
+
+
+ // =========================
+ // PAYROLL DISPUTES
+ // =========================
+
+Route::get('/payroll-disputes', function () {
+    $response = Http::get(
+        'http://payroll-service:8000/api/payroll-disputes',
+        request()->query()
+    );
+
+    return response()->json($response->json(), $response->status());
+});
+
+Route::post('/payroll-disputes', function () {
+    $response = Http::post(
+        'http://payroll-service:8000/api/payroll-disputes',
+        request()->all()
+    );
+
+    return response()->json($response->json(), $response->status());
+});
+
+Route::get('/payroll-disputes/{id}', function ($id) {
+    $response = Http::get(
+        "http://payroll-service:8000/api/payroll-disputes/{$id}"
+    );
+
+    return response()->json($response->json(), $response->status());
+});
+
+Route::put('/payroll-disputes/{id}', function ($id) {
+    $response = Http::put(
+        "http://payroll-service:8000/api/payroll-disputes/{$id}",
+        request()->all()
+    );
+
+    return response()->json($response->json(), $response->status());
+});
+
 // =========================
 // BENEFITS
 // =========================
